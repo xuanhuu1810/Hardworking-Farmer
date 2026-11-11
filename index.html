@@ -1,0 +1,4558 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hay Day Valley 2.5D - Nông Trại Thế Giới Mở Isometric</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #1b3b22;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #gameCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: grab;
+      z-index: 1;
+    }
+    #gameCanvas:active {
+      cursor: grabbing;
+    }
+    /* Floating HUD Layer */
+    #hudLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+    .hud-interactive {
+      pointer-events: auto;
+    }
+
+    /* Cozy Hay Day Wood & Gold Styling */
+    .wood-bar {
+      background: linear-gradient(180deg, #e09f54 0%, #b8732a 55%, #8f5316 100%);
+      border: 3px solid #593009;
+      box-shadow: 0 5px 0 #3d1f04, 0 8px 20px rgba(0,0,0,0.45), inset 0 2px 1px rgba(255, 243, 214, 0.65);
+      border-radius: 18px;
+      color: #fff9ec;
+    }
+    .wood-modal {
+      background: linear-gradient(180deg, #d9964a 0%, #ab6823 100%);
+      border: 4px solid #572e07;
+      box-shadow: 0 10px 0 #3a1d03, 0 20px 50px rgba(0,0,0,0.65), inset 0 3px 2px rgba(255, 240, 200, 0.6);
+      border-radius: 24px;
+      color: #fff8eb;
+    }
+    .parchment-card {
+      background: linear-gradient(180deg, #fffaf0 0%, #f5e4c3 100%);
+      border: 2.5px solid #9c6227;
+      box-shadow: 0 4px 0 #6e4114, inset 0 2px 0 #ffffff;
+      border-radius: 16px;
+      color: #4a2809;
+    }
+    .parchment-inset {
+      background: #eed7ae;
+      border: 2px solid #b57c3e;
+      box-shadow: inset 0 2px 5px rgba(89, 48, 9, 0.25);
+      border-radius: 12px;
+      color: #4a2809;
+    }
+
+    /* Tactile Buttons */
+    .btn-juice {
+      transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.14s ease, box-shadow 0.14s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .btn-juice:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.04);
+      filter: brightness(1.07);
+    }
+    .btn-juice:active:not(:disabled) {
+      transform: translateY(2px) scale(0.95);
+    }
+    .btn-juice:disabled {
+      opacity: 0.5;
+      filter: grayscale(0.4);
+      cursor: not-allowed;
+    }
+
+    .btn-green {
+      background: linear-gradient(180deg, #8be846 0%, #52b818 55%, #3c940b 100%);
+      border: 2.5px solid #245c04;
+      box-shadow: 0 4px 0 #184002, inset 0 2px 1px rgba(255,255,255,0.55);
+      color: #ffffff;
+      text-shadow: 0 1.5px 0 #1e4d03;
+    }
+    .btn-gold {
+      background: linear-gradient(180deg, #ffe55c 0%, #f59e0b 55%, #d97706 100%);
+      border: 2.5px solid #78350f;
+      box-shadow: 0 4px 0 #542307, inset 0 2px 1px rgba(255,255,255,0.65);
+      color: #451a03;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .btn-purple {
+      background: linear-gradient(180deg, #d8b4fe 0%, #9333ea 55%, #6b21a8 100%);
+      border: 2.5px solid #3b0764;
+      box-shadow: 0 4px 0 #260342, inset 0 2px 1px rgba(255,255,255,0.55);
+      color: #ffffff;
+      text-shadow: 0 1.5px 0 #3b0764;
+    }
+    .btn-blue {
+      background: linear-gradient(180deg, #7dd3fc 0%, #0284c7 55%, #0369a1 100%);
+      border: 2.5px solid #0c4a6e;
+      box-shadow: 0 4px 0 #082f49, inset 0 2px 1px rgba(255,255,255,0.55);
+      color: #ffffff;
+      text-shadow: 0 1.5px 0 #0c4a6e;
+    }
+    .btn-red {
+      background: linear-gradient(180deg, #fca5a5 0%, #ef4444 55%, #b91c1c 100%);
+      border: 2.5px solid #7f1d1d;
+      box-shadow: 0 4px 0 #450a0a, inset 0 2px 1px rgba(255,255,255,0.5);
+      color: #ffffff;
+      text-shadow: 0 1.5px 0 #7f1d1d;
+    }
+
+    /* Circular Dock Button */
+    .dock-orb {
+      width: 64px;
+      height: 64px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 32% 26%, #fff5d6 0%, #f3b552 45%, #b86b19 88%, #854607 100%);
+      border: 3.5px solid #4d2602;
+      box-shadow: 0 6px 0 #331800, 0 8px 18px rgba(0,0,0,0.45), inset 0 2px 3px rgba(255,255,255,0.75);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.16s ease;
+    }
+    .dock-orb:hover {
+      transform: scale(1.09) translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .dock-orb:active {
+      transform: scale(0.94) translateY(2px);
+    }
+    .dock-orb-label {
+      position: absolute;
+      bottom: -8px;
+      background: linear-gradient(180deg, #593009 0%, #361b02 100%);
+      color: #ffefc2;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1.5px solid #d9964a;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .dock-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ff4d4d 0%, #cc0000 100%);
+      border: 2px solid #ffffff;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      animation: pulseBadge 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    /* Custom Scrollbar for Modals */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(89, 48, 9, 0.18);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #9c6227;
+      border-radius: 999px;
+      border: 2px solid #f5e4c3;
+    }
+
+    /* Brush Tool Active Glow */
+    .brush-item.active {
+      transform: translateY(-6px) scale(1.08);
+      border-color: #fde047 !important;
+      box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.55), 0 6px 14px rgba(0,0,0,0.45);
+      background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%) !important;
+      color: #451a03 !important;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(15, 23, 15, 0.62);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeInModal 0.18s ease-out;
+    }
+    @keyframes fadeInModal {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 2.5D ISOMETRIC WORLD CANVAS -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- FLOATING HUD OVERLAY -->
+  <div id="hudLayer">
+    <!-- TOP HUD BAR -->
+    <div class="flex flex-wrap items-center justify-between gap-2 w-full">
+      <!-- Left: Settings, Farm Title & Level/XP Bar -->
+      <div class="flex items-center gap-2 hud-interactive">
+        <button id="btnSettings" onclick="openModal('settingsModal')" class="wood-bar btn-juice w-12 h-12 flex items-center justify-center text-2xl" title="Cài đặt & Thời tiết">
+          ⚙️
+        </button>
+
+        <!-- Level & XP Progress Pill -->
+        <div class="wood-bar px-3.5 py-1.5 flex items-center gap-3 min-w-[270px] sm:min-w-[330px]">
+          <div class="relative flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-b from-sky-300 via-sky-500 to-blue-700 border-2 border-yellow-300 shadow-md shrink-0">
+            <span class="text-xs font-black uppercase tracking-tighter text-yellow-200 absolute -top-1.5 bg-blue-900 px-1.5 rounded-full border border-yellow-300">LV</span>
+            <span id="hudLevel" class="text-lg font-black text-white drop-shadow">1</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span id="hudFarmName" onclick="renameFarmPrompt()" class="font-black text-sm text-amber-100 truncate cursor-pointer hover:underline" title="Bấm để đổi tên nông trại">🏡 Thung Lũng Nắng Vàng</span>
+              <span id="hudXpText" class="text-xs font-extrabold text-yellow-200 shrink-0">0 / 100 ⭐</span>
+            </div>
+            <div class="w-full h-3 bg-amber-950/80 rounded-full overflow-hidden border border-amber-400/50 mt-1 p-0.5">
+              <div id="hudXpBar" class="h-full bg-gradient-to-r from-sky-400 via-cyan-300 to-yellow-300 rounded-full transition-all duration-300" style="width: 15%"></div>
+            </div>
+            <div id="hudNextUnlock" class="text-[11px] font-bold text-amber-200/95 truncate mt-0.5">
+              🔜 Lv.2 mở: Quầy Bán Hàng, Chuồng Bò, Nhà Máy Sữa, Cà Rốt
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Weather / Time / Active Buffs Indicator -->
+      <div class="hidden xl:flex items-center gap-2 hud-interactive">
+        <div class="wood-bar px-3 py-1.5 flex items-center gap-2.5 text-xs font-extrabold">
+          <span id="hudTimeIcon" class="text-lg">☀️</span>
+          <div>
+            <div id="hudTimeLabel" class="text-amber-100">Ban Ngày Ấm Áp</div>
+            <div id="hudWeatherDesc" class="text-[11px] text-emerald-200">Tốc độ cây trồng: 100%</div>
+          </div>
+          <button onclick="toggleRainEvent()" class="btn-juice btn-blue px-2 py-1 rounded-lg text-[11px] font-black ml-1" title="Gọi mưa rào x2 tốc độ lớn">
+            🌧️ Gọi Mưa
+          </button>
+          <button onclick="cycleTimeOfDay()" class="btn-juice btn-gold px-2 py-1 rounded-lg text-[11px] font-black" title="Đổi Ngày / Hoàng Hôn / Đêm">
+            🌗 Đổi Giờ
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Gold, Diamonds, Barn Storage & Quick Upgrade -->
+      <div class="flex items-center gap-2 hud-interactive">
+        <!-- Gold Counter -->
+        <div id="hudGoldBox" class="wood-bar px-3 py-1.5 flex items-center gap-2">
+          <span class="text-2xl drop-shadow">🪙</span>
+          <div>
+            <div class="text-[10px] uppercase font-extrabold text-amber-200 leading-none">Vàng</div>
+            <div id="hudGold" class="text-base font-black text-yellow-300 tracking-tight">500</div>
+          </div>
+        </div>
+
+        <!-- Purple Diamonds -->
+        <div id="hudDiamondBox" class="wood-bar px-3 py-1.5 flex items-center gap-2">
+          <span class="text-2xl drop-shadow">💎</span>
+          <div>
+            <div class="text-[10px] uppercase font-extrabold text-purple-200 leading-none">Kim Cương</div>
+            <div id="hudDiamonds" class="text-base font-black text-purple-200 tracking-tight">25</div>
+          </div>
+        </div>
+
+        <!-- Storage Capacity + Quick Upgrade Button -->
+        <div id="hudBarnBox" class="wood-bar px-3 py-1.5 flex items-center gap-2">
+          <span class="text-2xl drop-shadow">🏠</span>
+          <div>
+            <div class="text-[10px] uppercase font-extrabold text-amber-200 leading-none">Kho Chứa</div>
+            <div id="hudStorage" class="text-sm font-black text-white">12 / 40</div>
+          </div>
+          <button onclick="openModal('barnModal')" class="btn-juice btn-green px-2.5 py-1 rounded-xl text-xs font-black ml-1" title="Nâng cấp sức chứa Kho bằng Đinh ốc / Ván gỗ / Băng keo">
+            ⬆️ Nâng Cấp
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE FLOATING DOCKS (LEFT & RIGHT) + CONTEXT BANNER -->
+    <div class="flex-1 flex items-center justify-between pointer-events-none my-2 relative">
+      <!-- LEFT DOCK: Orders, Barn/Materials, Achievements, Roadside Shop -->
+      <div class="flex flex-col gap-4 hud-interactive">
+        <div onclick="openModal('ordersModal')" class="dock-orb" title="Bảng Đơn Hàng Xe Tải & Đơn VIP">
+          <span class="text-3xl">🚚</span>
+          <span class="dock-orb-label">Đơn Hàng</span>
+          <span id="badgeOrders" class="dock-badge">3</span>
+        </div>
+
+        <div onclick="openModal('barnModal')" class="dock-orb" title="Kho Vật Phẩm & Vật Liệu Nâng Cấp">
+          <span class="text-3xl">📦</span>
+          <span class="dock-orb-label">Kho & Vật Liệu</span>
+        </div>
+
+        <div onclick="openModal('roadsideModal')" class="dock-orb" title="Quầy Bán Hàng Ven Đường (Mở Lv.2)">
+          <span class="text-3xl">🏪</span>
+          <span class="dock-orb-label">Sạp Ven Đường</span>
+          <span id="badgeRoadside" class="dock-badge hidden">!</span>
+        </div>
+
+        <div onclick="openModal('achievementsModal')" class="dock-orb" title="Sổ Thành Tựu - Nhận Kim Cương">
+          <span class="text-3xl">🏆</span>
+          <span class="dock-orb-label">Thành Tựu</span>
+          <span id="badgeAchieve" class="dock-badge hidden">1</span>
+        </div>
+      </div>
+
+      <!-- FLOATING ALERTS (Mystery Chest / Edit Mode / Farmhand Active) -->
+      <div class="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none">
+        <!-- Edit Mode Banner -->
+        <div id="editModeBanner" class="hidden hud-interactive wood-bar px-4 py-2 flex items-center gap-3 border-2 border-yellow-300 animate-bounce">
+          <span class="text-xl">📐</span>
+          <div class="text-xs font-extrabold">
+            <div class="text-yellow-300 font-black">CHẾ ĐỘ QUY HOẠCH (EDIT/MOVE MODE)</div>
+            <div id="editModeHint" class="text-white">Click vào bất kỳ công trình/ô đất/chuồng trại nào để nhấc lên và đặt sang ô mới!</div>
+          </div>
+          <button onclick="toggleEditMode(false)" class="btn-juice btn-red px-3 py-1 rounded-xl text-xs font-black">
+            ✖ Thoát
+          </button>
+        </div>
+
+        <!-- Mystery Chest Alert Pill -->
+        <button id="chestAlertBtn" onclick="focusMysteryChest()" class="hidden hud-interactive btn-juice btn-red px-4 py-1.5 rounded-full text-xs font-black flex items-center gap-2 shadow-lg border-2 border-yellow-300">
+          <span class="text-base animate-bounce">🎁</span>
+          <span>Rương Kho Báu Đỏ vừa xuất hiện! Bấm để tới mở ngay!</span>
+        </button>
+
+        <!-- Farmhand Active Pill -->
+        <div id="farmhandStatusPill" class="hidden hud-interactive wood-bar px-3.5 py-1 rounded-full text-xs font-black flex items-center gap-2 border border-emerald-300">
+          <span>👨‍🌾 Quản Gia Tom đang làm việc:</span>
+          <span id="farmhandTimerText" class="text-yellow-300">04:59</span>
+        </div>
+      </div>
+
+      <!-- RIGHT DOCK: Animals/Pets/Pond, Factories/Mastery, Build Shop, Edit Mode & Lucky Wheel -->
+      <div class="flex flex-col gap-4 hud-interactive">
+        <div onclick="openModal('animalsModal')" class="dock-orb" title="Chăn Nuôi, Hồ Câu Cá, Thú Cưng & Quản Gia">
+          <span class="text-3xl">🐾</span>
+          <span class="dock-orb-label">Vật Nuôi & Hồ</span>
+        </div>
+
+        <div onclick="openModal('factoriesModal')" class="dock-orb" title="Chuỗi Nhà Máy & Nâng Cấp Sao Vàng Mastery">
+          <span class="text-3xl">🏭</span>
+          <span class="dock-orb-label">Nhà Máy 3⭐</span>
+          <span id="badgeFactories" class="dock-badge hidden">!</span>
+        </div>
+
+        <div onclick="openModal('shopModal')" class="dock-orb" title="Cửa Hàng Xây Dựng, Hầm Mỏ & Mở Rộng Đất">
+          <span class="text-3xl">🛒</span>
+          <span class="dock-orb-label">Xây Dựng & Mỏ</span>
+        </div>
+
+        <div onclick="openModal('wheelModal')" class="dock-orb" title="Vòng Quay May Mắn Jackpot">
+          <span class="text-3xl">🎡</span>
+          <span class="dock-orb-label">Vòng Quay</span>
+          <span id="badgeTickets" class="dock-badge">1</span>
+        </div>
+
+        <div id="btnEditDock" onclick="toggleEditMode()" class="dock-orb" title="Chế độ Di Chuyển / Quy Hoạch Bản Đồ Isometric">
+          <span class="text-3xl">📐</span>
+          <span class="dock-orb-label">Quy Hoạch</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM QUICK ACTION & SEED BRUSH BAR -->
+    <div class="flex flex-wrap items-end justify-between gap-2 w-full">
+      <!-- Left Camera & Zone Quick Jump -->
+      <div class="hidden md:flex items-center gap-1.5 hud-interactive wood-bar px-3 py-1.5">
+        <span class="text-xs font-black text-amber-200 mr-1">🗺️ Đi tới:</span>
+        <button onclick="panToZone('center')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🏡 Trang Trại</button>
+        <button onclick="panToZone('shop')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🏪 Sạp Đường</button>
+        <button onclick="panToZone('pond')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🎣 Hồ Câu</button>
+        <button onclick="panToZone('mine')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">⛏️ Hầm Mỏ</button>
+      </div>
+
+      <!-- Center: Hold-and-Sweep Seed & Tool Bar -->
+      <div class="mx-auto hud-interactive wood-bar px-3 py-2 flex items-center gap-2 overflow-x-auto max-w-full">
+        <div class="text-xs font-black text-amber-100 pr-1 border-r border-amber-200/30 hidden sm:block">
+          <div>CÔNG CỤ</div>
+          <div class="text-[10px] text-amber-200 font-normal">Giữ chuột quét</div>
+        </div>
+        <div id="brushBarContainer" class="flex items-center gap-1.5">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Right: Zoom Controls -->
+      <div class="hidden sm:flex items-center gap-1.5 hud-interactive wood-bar px-2.5 py-1.5">
+        <button onclick="adjustZoom(-0.18)" class="btn-juice parchment-card w-8 h-8 flex items-center justify-center font-black text-base" title="Thu nhỏ">➖</button>
+        <span id="zoomLabel" class="text-xs font-black text-amber-100 min-w-[44px] text-center">100%</span>
+        <button onclick="adjustZoom(0.18)" class="btn-juice parchment-card w-8 h-8 flex items-center justify-center font-black text-base" title="Phóng to">➕</button>
+        <button onclick="resetCamera()" class="btn-juice btn-gold px-2 h-8 rounded-xl text-xs font-black" title="Về giữa bản đồ">🎯</button>
+      </div>
+    </div>
+  </div>
+  <!-- =====================================================================
+       MODALS LAYER (ORDERS, BARN, ROADSIDE, ACHIEVEMENTS, ANIMALS/FISHING,
+       FACTORIES/MASTERY, BUILD SHOP/MINE, LUCKY WHEEL, SETTINGS)
+       ===================================================================== -->
+
+  <!-- 1. TRUCK ORDERS MODAL -->
+  <div id="ordersModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('ordersModal')">
+    <div class="wood-modal w-full max-w-4xl max-h-[88vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🚚</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">BẢNG ĐƠN HÀNG XE TẢI & ĐƠN VIP</h2>
+            <p class="text-xs text-amber-200 font-bold">Giao hàng qua cầu gỗ để nhận Vàng, XP lớn và Kim Cương từ khách VIP!</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="truckStatusBadge" class="parchment-card px-3 py-1 text-xs font-black">🚚 Xe tải đang đậu tại nông trại</span>
+          <button onclick="closeModal('ordersModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+        </div>
+      </div>
+      <div id="ordersListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 overflow-y-auto pr-1 flex-1">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="mt-4 pt-3 border-t-2 border-amber-900/40 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-amber-100">
+        <span>💡 Mẹo: Đơn hàng VIP 👑 luôn thưởng thêm Kim Cương Tím 💎 và nhiều XP!</span>
+        <button onclick="refreshAllOrdersWithDiamond()" class="btn-juice btn-purple px-3.5 py-2 rounded-xl font-black">
+          🔄 Làm mới toàn bộ đơn (2 💎)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BARN, SILO & UPGRADE MATERIALS MODAL -->
+  <div id="barnModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('barnModal')">
+    <div class="wood-modal w-full max-w-4xl max-h-[88vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">📦</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">KHO LƯƠNG THỰC (SILO) & KHO VẬT PHẨM (BARN)</h2>
+            <p class="text-xs text-amber-200 font-bold">Thu hoạch cây & vật nuôi có 15% cơ hội rơi Đinh Ốc, Ván Gỗ, Băng Keo hiếm!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('barnModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <!-- Barn Upgrade Banner -->
+      <div id="barnUpgradePanel" class="parchment-card p-4 mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Rare Tools & Materials Row -->
+      <div id="barnMaterialsRow" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 mb-4">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Inventory Items Grid -->
+      <div class="text-sm font-black text-amber-100 mb-2">🌾 NÔNG SẢN, THÀNH PHẨM & KHOÁNG SẢN TRONG KHO:</div>
+      <div id="barnInventoryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 overflow-y-auto pr-1 flex-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ROADSIDE SHOP MODAL (LV.2) -->
+  <div id="roadsideModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('roadsideModal')">
+    <div class="wood-modal w-full max-w-4xl max-h-[88vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🏪</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">QUẦY BÁN HÀNG VEN ĐƯỜNG (ROADSIDE SHOP)</h2>
+            <p class="text-xs text-amber-200 font-bold">Treo nông sản/thành phẩm với giá tùy chỉnh — Khách bộ hành đi ngang sẽ ghé mua và để lại túi tiền!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('roadsideModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div id="roadsideBody" class="flex-1 overflow-y-auto pr-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ACHIEVEMENTS MODAL -->
+  <div id="achievementsModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('achievementsModal')">
+    <div class="wood-modal w-full max-w-3xl max-h-[88vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🏆</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">SỔ THÀNH TỰU DANH GIÁ</h2>
+            <p class="text-xs text-amber-200 font-bold">Hoàn thành các cột mốc cày cuốc để nhận thưởng Kim Cương Tím 💎 và XP!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('achievementsModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+      <div id="achievementsList" class="space-y-3 overflow-y-auto pr-1 flex-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ANIMALS, FISHING POND MINI-GAME, PETS & FARMHAND MODAL -->
+  <div id="animalsModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('animalsModal')">
+    <div class="wood-modal w-full max-w-5xl max-h-[90vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🐾</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">CHĂN NUÔI, HỒ CÂU CÁ, THÚ CƯNG & QUẢN GIA</h2>
+            <p class="text-xs text-amber-200 font-bold">Thu hoạch Trứng/Sữa/Lông Cừu, thả câu Ngọc Trai hiếm, cưng nựng Cún/Mèo và thuê Quản Gia tự động!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('animalsModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div id="animalsModalContent" class="space-y-4 overflow-y-auto pr-1 flex-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. FACTORIES & 3-STAR GOLDEN MASTERY MODAL -->
+  <div id="factoriesModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('factoriesModal')">
+    <div class="wood-modal w-full max-w-5xl max-h-[90vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🏭</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">CHUỖI NHÀ MÁY & THÔNG THẠO 3 SAO VÀNG (MASTERY)</h2>
+            <p class="text-xs text-amber-200 font-bold">Nâng cấp Nhà máy từ Lv.1 -> Lv.5 (Sao Vàng): Mở 6 ô hàng đợi, giảm 20% thời gian, +30% giá bán & Mái Nhà Mạ Vàng!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('factoriesModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div id="factoriesModalContent" class="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-y-auto pr-1 flex-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. SHOP, LAND EXPANSION, DECORATIONS & MINE MODAL -->
+  <div id="shopModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('shopModal')">
+    <div class="wood-modal w-full max-w-5xl max-h-[90vh] flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🛒</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">CỬA HÀNG XÂY DỰNG, KHAI THÁC MỎ & MỞ RỘNG ĐẤT ĐAI</h2>
+            <p class="text-xs text-amber-200 font-bold">Mua thêm Ô Đất, Chuồng Trại, Nhà Máy, Trang Trí, Khai Phá Vùng Đất Khóa & Đào Quặng Hầm Mỏ!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('shopModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div id="shopModalContent" class="space-y-5 overflow-y-auto pr-1 flex-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. LUCKY SPIN WHEEL MODAL -->
+  <div id="wheelModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('wheelModal')">
+    <div class="wood-modal w-full max-w-2xl flex flex-col items-center p-5">
+      <div class="w-full flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🎡</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">VÒNG QUAY MAY MẮN HÀNG NGÀY</h2>
+            <p class="text-xs text-amber-200 font-bold">Quay trúng Jackpot Vàng, Kim Cương Tím, Thuốc Nổ TNT hoặc Bộ Nâng Cấp Kho!</p>
+          </div>
+        </div>
+        <button onclick="closeModal('wheelModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div class="relative flex items-center justify-center my-2">
+        <!-- Pointer Arrow at Top -->
+        <div class="absolute -top-4 z-20 text-4xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.6)]">🔻</div>
+        <canvas id="wheelCanvas" width="320" height="320" class="rounded-full shadow-2xl border-4 border-yellow-300"></canvas>
+      </div>
+
+      <div id="wheelResultText" class="text-base font-black text-yellow-200 my-2 min-h-[24px] text-center">
+        ✨ Sẵn sàng thử vận may hôm nay!
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 mt-2">
+        <button id="btnSpinTicket" onclick="spinLuckyWheel(false)" class="btn-juice btn-green px-6 py-3 rounded-2xl font-black text-base flex items-center gap-2">
+          🎟️ Quay Bằng Vé (<span id="wheelTicketCount">1</span>)
+        </button>
+        <button id="btnSpinDiamond" onclick="spinLuckyWheel(true)" class="btn-juice btn-purple px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2">
+          💎 Quay Thêm (3 💎)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. SETTINGS & ENVIRONMENT CONTROL MODAL -->
+  <div id="settingsModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('settingsModal')">
+    <div class="wood-modal w-full max-w-xl flex flex-col p-5">
+      <div class="flex items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">⚙️</span>
+          <div>
+            <h2 class="text-xl font-black text-amber-100">CÀI ĐẶT, THỜI TIẾT & TRợ GIÚP NHANH</h2>
+            <p class="text-xs text-amber-200 font-bold">Tùy chỉnh âm thanh Web Audio API, chu kỳ Ngày/Đêm và công cụ thử nghiệm</p>
+          </div>
+        </div>
+        <button onclick="closeModal('settingsModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="parchment-card p-3.5 flex items-center justify-between">
+          <div>
+            <div class="font-black text-sm">🔊 Âm Thanh Tổng Hợp (Web Audio API)</div>
+            <div class="text-xs text-amber-800">Hiệu ứng tiếng thu hoạch, leng keng vàng, còi xe tải, mưa & nhạc hiệu</div>
+          </div>
+          <button id="btnToggleSound" onclick="toggleSound()" class="btn-juice btn-green px-4 py-2 rounded-xl font-black text-xs">
+            ĐANG BẬT 🔊
+          </button>
+        </div>
+
+        <div class="parchment-card p-3.5 flex items-center justify-between">
+          <div>
+            <div class="font-black text-sm">🌅 Chu Kỳ Ánh Sáng 2.5D (Ngày / Hoàng Hôn / Đêm)</div>
+            <div class="text-xs text-amber-800">Ban đêm tự động thắp sáng đèn lồng vàng ấm áp tại mọi tòa nhà</div>
+          </div>
+          <button onclick="cycleTimeOfDay()" class="btn-juice btn-gold px-4 py-2 rounded-xl font-black text-xs">
+            Đổi Khung Giờ 🌗
+          </button>
+        </div>
+
+        <div class="parchment-card p-3.5 flex items-center justify-between">
+          <div>
+            <div class="font-black text-sm">🌧️ Thời Tiết Mưa Rào Ngẫu Nhiên</div>
+            <div class="text-xs text-amber-800">Khi trời mưa, toàn bộ cây trồng trên cánh đồng lớn nhanh gấp đôi (2x)!</div>
+          </div>
+          <button onclick="toggleRainEvent()" class="btn-juice btn-blue px-4 py-2 rounded-xl font-black text-xs">
+            Bật / Tắt Mưa 🌧️
+          </button>
+        </div>
+
+        <div class="parchment-card p-3.5">
+          <div class="font-black text-sm mb-2">🚀 Công Cụ Trải Nghiệm Nhanh (Sandbox / Developer Boost)</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="devGrantBoost()" class="btn-juice btn-gold py-2 px-3 rounded-xl font-black text-xs">
+              🎁 +2,000 Vàng, +20 💎 & Bộ Vật Liệu
+            </button>
+            <button onclick="devLevelUp()" class="btn-juice btn-purple py-2 px-3 rounded-xl font-black text-xs">
+              ⭐ Lên Cấp Ngay (+1 Level)
+            </button>
+            <button onclick="spawnMysteryChestNow()" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
+              🧰 Triệu Hồi Rương Kho Báu Đỏ
+            </button>
+            <button onclick="resetSaveData()" class="btn-juice btn-red py-2 px-3 rounded-xl font-black text-xs">
+              🗑️ Xóa Lưu Trữ & Chơi Lại Từ Đầu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    /*************************************************************************
+     * 1. CORE CONFIGURATION, MULTI-TIER PRODUCTION DATA & WORLD DEFINITIONS
+     *************************************************************************/
+    const GRID_SIZE = 32;      // 32x32 Isometric Open World Grid
+    const TILE_W = 84;         // Diamond width = 84px
+    const TILE_H = 42;         // Diamond height = 42px (2:1 ratio)
+    const SAVE_KEY = 'HAYDAY_VALLEY_25D_SAVE_V2';
+
+    // Level Unlock Preview Table
+    const LEVEL_UNLOCK_INFO = {
+      1: 'Khởi đầu: Lúa Mì, Ngô, Chuồng Gà, Lò Bánh Mì, Xe Tải Giao Hàng',
+      2: 'Mở khóa: Quầy Bán Hàng Ven Đường, Chuồng Bò, Nhà Máy Sữa, Nhà Máy Đường, Cà Rốt & Mía',
+      3: 'Mở khóa: Hồ Câu Cá & Cầu Gỗ (Ngọc Trai), Chuồng Cừu, Lò Bánh Kem, Dâu Tây',
+      4: 'Mở khóa: Chuồng Thú Cưng (Cún & Mèo), Quản Gia Tự Động (Farmhand), Nho Tím',
+      5: 'Mở khóa: Vách Núi Hầm Mỏ, Lò Luyện Kim & Xưởng Trang Sức (Vương Miện & Nhẫn Kim Cương)',
+      6: 'Đạt Đỉnh Cao Nông Trại: Mở rộng tối đa & Thưởng +50% XP mọi đơn hàng VIP!'
+    };
+
+    // Crops (Lv.1 -> Lv.6)
+    const CROPS = {
+      wheat: {
+        id: 'wheat', name: 'Lúa Mì', icon: '🌾', unlockLv: 1,
+        growTime: 4, seedCost: 2, sellPrice: 7, xp: 3,
+        colorTop: '#facc15', colorStem: '#ca8a04'
+      },
+      corn: {
+        id: 'corn', name: 'Ngô Ngọt', icon: '🌽', unlockLv: 1,
+        growTime: 10, seedCost: 5, sellPrice: 14, xp: 5,
+        colorTop: '#fde047', colorStem: '#4d7c0f'
+      },
+      carrot: {
+        id: 'carrot', name: 'Cà Rốt', icon: '🥕', unlockLv: 2,
+        growTime: 20, seedCost: 9, sellPrice: 24, xp: 8,
+        colorTop: '#fb923c', colorStem: '#16a34a'
+      },
+      sugarcane: {
+        id: 'sugarcane', name: 'Mía Đường', icon: '🎋', unlockLv: 2,
+        growTime: 30, seedCost: 14, sellPrice: 36, xp: 12,
+        colorTop: '#a3e635', colorStem: '#15803d'
+      },
+      strawberry: {
+        id: 'strawberry', name: 'Dâu Tây', icon: '🍓', unlockLv: 3,
+        growTime: 45, seedCost: 22, sellPrice: 58, xp: 18,
+        colorTop: '#f43f5e', colorStem: '#15803d'
+      },
+      grape: {
+        id: 'grape', name: 'Nho Tím', icon: '🍇', unlockLv: 4,
+        growTime: 60, seedCost: 32, sellPrice: 85, xp: 26,
+        colorTop: '#9333ea', colorStem: '#166534'
+      }
+    };
+
+    // All Products & Resources Catalog (for Barn, Roadside Shop, Orders)
+    const ITEMS = {
+      // Crops
+      wheat:      { id: 'wheat',      name: 'Lúa Mì',            icon: '🌾', basePrice: 7,   cat: 'crop' },
+      corn:       { id: 'corn',       name: 'Ngô Ngọt',          icon: '🌽', basePrice: 14,  cat: 'crop' },
+      carrot:     { id: 'carrot',     name: 'Cà Rốt',            icon: '🥕', basePrice: 24,  cat: 'crop' },
+      sugarcane:  { id: 'sugarcane',  name: 'Mía Đường',         icon: '🎋', basePrice: 36,  cat: 'crop' },
+      strawberry: { id: 'strawberry', name: 'Dâu Tây',           icon: '🍓', basePrice: 58,  cat: 'crop' },
+      grape:      { id: 'grape',      name: 'Nho Tím',           icon: '🍇', basePrice: 85,  cat: 'crop' },
+
+      // Animal Products
+      egg:        { id: 'egg',        name: 'Trứng Gà Tươi',     icon: '🥚', basePrice: 18,  cat: 'animal' },
+      milk:       { id: 'milk',       name: 'Sữa Bò Tươi',       icon: '🥛', basePrice: 34,  cat: 'animal' },
+      wool:       { id: 'wool',       name: 'Lông Cừu Trắng',    icon: '🧶', basePrice: 52,  cat: 'animal' },
+
+      // Fishing Pond Products (Lv.3)
+      salmon:     { id: 'salmon',     name: 'Phi Lê Cá Hồi',     icon: '🐟', basePrice: 65,  cat: 'fish' },
+      lobster:    { id: 'lobster',    name: 'Tôm Hùm Đỏ',        icon: '🦞', basePrice: 110, cat: 'fish' },
+      pearl:      { id: 'pearl',      name: 'Ngọc Trai Hiếm',    icon: '🦪', basePrice: 190, cat: 'fish' },
+
+      // Mine Ores (Lv.5)
+      silver_ore:   { id: 'silver_ore',   name: 'Quặng Bạc',     icon: '🪨', basePrice: 55,  cat: 'ore' },
+      gold_ore:     { id: 'gold_ore',     name: 'Quặng Vàng',    icon: '🪙', basePrice: 90,  cat: 'ore' },
+      platinum_ore: { id: 'platinum_ore', name: 'Bạch Kim',      icon: '✨', basePrice: 140, cat: 'ore' },
+
+      // Factory Crafted Products
+      bread:           { id: 'bread',           name: 'Bánh Mì Nóng',          icon: '🍞', basePrice: 38,  cat: 'craft' },
+      cornbread:       { id: 'cornbread',       name: 'Bánh Ngô Bơ',           icon: '🧁', basePrice: 68,  cat: 'craft' },
+      cream:           { id: 'cream',           name: 'Kem Tươi Béo',          icon: '🍦', basePrice: 62,  cat: 'craft' },
+      cheese:          { id: 'cheese',          name: 'Phô Mai Vàng',          icon: '🧀', basePrice: 115, cat: 'craft' },
+      sugar:           { id: 'sugar',           name: 'Đường Nâu Mía',         icon: '🍯', basePrice: 64,  cat: 'craft' },
+      bbq_fish:        { id: 'bbq_fish',        name: 'Cá Hồi Nướng BBQ',      icon: '🍢', basePrice: 135, cat: 'craft' },
+      strawberry_cake: { id: 'strawberry_cake', name: 'Bánh Kem Dâu Hảo Hạng', icon: '🎂', basePrice: 240, cat: 'craft' },
+      grape_gelato:    { id: 'grape_gelato',    name: 'Kem Nho Hoàng Gia',     icon: '🍨', basePrice: 265, cat: 'craft' },
+      silver_bar:      { id: 'silver_bar',      name: 'Thỏi Bạc Nguyên Chất',  icon: '🥈', basePrice: 145, cat: 'craft' },
+      gold_bar:        { id: 'gold_bar',        name: 'Thỏi Vàng 9999',        icon: '🥇', basePrice: 230, cat: 'craft' },
+      gold_crown:      { id: 'gold_crown',      name: 'Vương Miện Vàng',       icon: '👑', basePrice: 520, cat: 'craft' },
+      diamond_ring:    { id: 'diamond_ring',    name: 'Nhẫn Kim Cương Ngọc',   icon: '💍', basePrice: 680, cat: 'craft' }
+    };
+
+    // Rare Upgrade Materials & Exploration Tools (15% Lucky Drop Pool)
+    const MATERIALS = {
+      bolt:    { id: 'bolt',    name: 'Đinh Ốc',        icon: '🔩', desc: 'Dùng nâng cấp Kho & Nhà máy' },
+      plank:   { id: 'plank',   name: 'Ván Gỗ',         icon: '🪵', desc: 'Dùng nâng cấp Kho & Sửa Bến Câu' },
+      tape:    { id: 'tape',    name: 'Băng Keo',       icon: '🎗️', desc: 'Dùng nâng cấp Kho & Nhà máy' },
+      axe:     { id: 'axe',     name: 'Rìu Sắt',        icon: '🪓', desc: 'Chặt cây khô rìa bản đồ lấy Gỗ & XP' },
+      tnt:     { id: 'tnt',     name: 'Thuốc Nổ TNT',   icon: '🧨', desc: 'Nổ vách núi Hầm Mỏ lấy Quặng & Kim Cương' },
+      pickaxe: { id: 'pickaxe', name: 'Cuốc Chim',      icon: '⛏️', desc: 'Đào sâu Hầm Mỏ lấy Bạch Kim & Vàng' },
+      lure:    { id: 'lure',    name: 'Mồi Câu Vàng',   icon: '🪝', desc: 'Tăng gấp đôi tỷ lệ câu trúng Ngọc Trai' }
+    };
+
+    // Animal Pens Definitions
+    const ANIMAL_PENS = {
+      coop: {
+        type: 'coop', name: 'Chuồng Gà Đẻ Trứng', icon: '🐔', unlockLv: 1,
+        cost: 120, size: 2, feedCrop: 'wheat', feedQty: 1,
+        output: 'egg', prodTime: 15, xp: 8
+      },
+      cowshed: {
+        type: 'cowshed', name: 'Chuồng Bò Sữa', icon: '🐄', unlockLv: 2,
+        cost: 260, size: 2, feedCrop: 'corn', feedQty: 1,
+        output: 'milk', prodTime: 30, xp: 14
+      },
+      sheeppen: {
+        type: 'sheeppen', name: 'Chuồng Cừu Lông', icon: '🐑', unlockLv: 3,
+        cost: 420, size: 2, feedCrop: 'carrot', feedQty: 1,
+        output: 'wool', prodTime: 45, xp: 20
+      }
+    };
+
+    // Factories & Multi-Tier Recipes (Upgradeable Lv.1 -> Lv.5 Golden Mastery)
+    const FACTORIES = {
+      bakery: {
+        type: 'bakery', name: 'Lò Bánh Mì', icon: '🥖', unlockLv: 1, cost: 160, size: 2,
+        roofColor: '#d97706', wallColor: '#fef3c7',
+        recipes: [
+          { id: 'r_bread', output: 'bread', time: 12, xp: 10, inputs: { wheat: 2, egg: 1 } },
+          { id: 'r_cornbread', output: 'cornbread', time: 18, xp: 16, inputs: { corn: 2, milk: 1 } }
+        ]
+      },
+      dairy: {
+        type: 'dairy', name: 'Nhà Máy Sữa', icon: '🧀', unlockLv: 2, cost: 300, size: 2,
+        roofColor: '#2563eb', wallColor: '#f8fafc',
+        recipes: [
+          { id: 'r_cream', output: 'cream', time: 16, xp: 14, inputs: { milk: 1 } },
+          { id: 'r_cheese', output: 'cheese', time: 25, xp: 24, inputs: { milk: 1, cream: 1 } }
+        ]
+      },
+      sugar_bbq: {
+        type: 'sugar_bbq', name: 'Nhà Máy Đường & Lò BBQ', icon: '🍖', unlockLv: 2, cost: 360, size: 2,
+        roofColor: '#b91c1c', wallColor: '#ffedd5',
+        recipes: [
+          { id: 'r_sugar', output: 'sugar', time: 18, xp: 15, inputs: { sugarcane: 2 } },
+          { id: 'r_bbq', output: 'bbq_fish', time: 24, xp: 28, inputs: { salmon: 1, carrot: 1 } }
+        ]
+      },
+      cake_oven: {
+        type: 'cake_oven', name: 'Lò Bánh Ngọt & Kem', icon: '🎂', unlockLv: 3, cost: 550, size: 2,
+        roofColor: '#db2777', wallColor: '#fce7f3',
+        recipes: [
+          { id: 'r_strawcake', output: 'strawberry_cake', time: 30, xp: 42, inputs: { strawberry: 1, cream: 1, bread: 1 } },
+          { id: 'r_gelato', output: 'grape_gelato', time: 35, xp: 48, inputs: { grape: 1, sugar: 1, cream: 1 } }
+        ]
+      },
+      smelter: {
+        type: 'smelter', name: 'Lò Luyện Kim', icon: '🔥', unlockLv: 5, cost: 850, size: 2,
+        roofColor: '#475569', wallColor: '#cbd5e1',
+        recipes: [
+          { id: 'r_silverbar', output: 'silver_bar', time: 22, xp: 35, inputs: { silver_ore: 2 } },
+          { id: 'r_goldbar', output: 'gold_bar', time: 30, xp: 52, inputs: { gold_ore: 2 } }
+        ]
+      },
+      jewelry: {
+        type: 'jewelry', name: 'Xưởng Chế Tác Trang Sức', icon: '💍', unlockLv: 5, cost: 1200, size: 2,
+        roofColor: '#7e22ce', wallColor: '#f3e8ff',
+        recipes: [
+          { id: 'r_crown', output: 'gold_crown', time: 38, xp: 85, inputs: { gold_bar: 1, silver_bar: 1, pearl: 1 } },
+          { id: 'r_ring', output: 'diamond_ring', time: 45, xp: 110, inputs: { gold_bar: 1, platinum_ore: 1, pearl: 1 } }
+        ]
+      }
+    };
+
+    // Decorations Catalog (For Land Expansion & Customization)
+    const DECORATIONS = {
+      stone_path:   { type: 'stone_path',   name: 'Đường Lát Đá Cuội', icon: '🪨', cost: 20,  size: 1, xp: 2 },
+      lantern_post: { type: 'lantern_post', name: 'Đèn Đường Cổ Điển', icon: '🏮', cost: 65,  size: 1, xp: 8 },
+      flower_bed:   { type: 'flower_bed',   name: 'Bồn Hoa Hướng Dương', icon: '🌻', cost: 50, size: 1, xp: 6 },
+      fountain:     { type: 'fountain',     name: 'Đài Phun Nước Đá',   icon: '⛲', cost: 280, size: 2, xp: 30 },
+      gold_statue:  { type: 'gold_statue',  name: 'Tượng Gà Vàng Ròng', icon: '🏆', cost: 650, size: 1, xp: 75 }
+    };
+
+    // Expandable Land Sectors around the periphery
+    const LAND_SECTORS = [
+      { id: 'sec_east',  name: 'Đồi Phía Đông (Mở rộng Cánh Đồng)', gx: 22, gy: 12, w: 6, h: 7, reqLv: 2, costGold: 250, reqMat: { plank: 1 } },
+      { id: 'sec_south', name: 'Thung Lũng Nam (Khu Công Nghiệp)',  gx: 11, gy: 23, w: 8, h: 6, reqLv: 3, costGold: 450, reqMat: { bolt: 1, plank: 1 } },
+      { id: 'sec_west',  name: 'Vườn Ven Hồ Tây (Biệt Thự Hoa)',    gx: 3,  gy: 19, w: 7, h: 7, reqLv: 4, costGold: 750, reqMat: { tape: 2, plank: 1 } },
+      { id: 'sec_north', name: 'Cao Nguyên Bắc (Cạnh Hầm Mỏ)',      gx: 21, gy: 4,  w: 7, h: 6, reqLv: 5, costGold: 1100, reqMat: { bolt: 2, tape: 2 } }
+    ];
+
+    // Lucky Wheel Slices
+    const WHEEL_SLICES = [
+      { label: 'JACKPOT 600🪙', color: '#f59e0b', type: 'gold', amount: 600, icon: '💰' },
+      { label: '+8 Kim Cương',   color: '#9333ea', type: 'diamond', amount: 8, icon: '💎' },
+      { label: 'Bộ Nâng Kho',    color: '#10b981', type: 'barn_pack', amount: 1, icon: '🔩' },
+      { label: '+250 Vàng',      color: '#3b82f6', type: 'gold', amount: 250, icon: '🪙' },
+      { label: '2x TNT & Cuốc',  color: '#ef4444', type: 'mine_pack', amount: 2, icon: '🧨' },
+      { label: 'Hạt Giống Thần', color: '#84cc16', type: 'crop_boost', amount: 1, icon: '🌱' },
+      { label: '+2 Mồi Vàng',    color: '#06b6d4', type: 'lure', amount: 2, icon: '🪝' },
+      { label: '+120 XP ⭐',     color: '#ec4899', type: 'xp', amount: 120, icon: '⭐' }
+    ];
+
+    // Achievements List
+    const ACHIEVEMENTS_DEF = [
+      { id: 'ach_harvest', title: 'Bàn Tay Vàng Mùa Gặt', desc: 'Thu hoạch tổng cộng 20 vụ mùa cây trồng', stat: 'totalHarvested', target: 20, rewardDia: 5, rewardXp: 50 },
+      { id: 'ach_orders',  title: 'Ông Trùm Giao Vận',    desc: 'Hoàn thành 5 chuyến xe tải giao hàng',     stat: 'totalOrders',    target: 5,  rewardDia: 8, rewardXp: 80 },
+      { id: 'ach_lucky',   title: 'Thợ Săn Vật Phẩm Hiếm', desc: 'Nhặt được 6 vật phẩm hiếm rơi ra (Lucky Drop)', stat: 'totalLuckyDrops', target: 6, rewardDia: 6, rewardXp: 70 },
+      { id: 'ach_fish',    title: 'Ngư Phủ Săn Ngọc Trai', desc: 'Câu thành công 3 mẻ cá/ngọc trai tại Hồ Câu', stat: 'totalFished', target: 3, rewardDia: 8, rewardXp: 90 },
+      { id: 'ach_mastery', title: 'Kỹ Sư Sao Vàng Mastery', desc: 'Nâng cấp bất kỳ Nhà máy nào lên Cấp 3 trở lên', stat: 'maxFactoryLv', target: 3, rewardDia: 12, rewardXp: 150 },
+      { id: 'ach_mine',    title: 'Chúa Tể Hầm Mỏ',       desc: 'Khai thác 5 lần tại Vách Núi Hầm Mỏ',      stat: 'totalMined',     target: 5,  rewardDia: 15, rewardXp: 200 }
+    ];
+
+    /*************************************************************************
+     * 2. SYNTHESIZED WEB AUDIO API SOUND ENGINE
+     *************************************************************************/
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      try {
+        if (type === 'pop') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(680, now + 0.08);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 0.09);
+        } else if (type === 'harvest') {
+          [523.25, 659.25, 783.99].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.045);
+            gain.gain.setValueAtTime(0.14, now + idx * 0.045);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.045 + 0.16);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now + idx * 0.045); osc.stop(now + idx * 0.045 + 0.17);
+          });
+        } else if (type === 'coin') {
+          [987.77, 1318.51].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.16, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.22);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.23);
+          });
+        } else if (type === 'luckyDrop') {
+          [587.33, 783.99, 987.77, 1174.66, 1567.98].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.055);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.28);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now + idx * 0.055); osc.stop(now + idx * 0.055 + 0.29);
+          });
+        } else if (type === 'levelup') {
+          [440, 554.37, 659.25, 880, 1108.73, 1318.51].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.075);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.35);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now + idx * 0.075); osc.stop(now + idx * 0.075 + 0.36);
+          });
+        } else if (type === 'horn') {
+          [220, 277.18].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+            gain.gain.setValueAtTime(0.11, now + idx * 0.14);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.13);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now + idx * 0.14); osc.stop(now + idx * 0.14 + 0.14);
+          });
+        } else if (type === 'explosion') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(32, now + 0.38);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 0.41);
+        } else if (type === 'splash') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 0.21);
+        } else if (type === 'pet') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(760, now + 0.12);
+          osc.frequency.exponentialRampToValueAtTime(520, now + 0.22);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 0.25);
+        } else if (type === 'wheelTick') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(820, now);
+          gain.gain.setValueAtTime(0.09, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now); osc.stop(now + 0.04);
+        }
+      } catch (e) {}
+    }
+
+    /*************************************************************************
+     * 3. GAME STATE & INITIALIZATION
+     *************************************************************************/
+    let state = null;
+
+    function createInitialState() {
+      // Create 12 initial diamond soil plots in Central Zone (gx: 13..16, gy: 14..16)
+      const plots = [];
+      let pid = 1;
+      for (let gx = 13; gx <= 16; gx++) {
+        for (let gy = 14; gy <= 16; gy++) {
+          plots.push({
+            id: 'plot_' + (pid++),
+            gx, gy,
+            crop: gx <= 14 ? 'wheat' : null,
+            plantedAt: gx <= 14 ? Date.now() - 4000 : 0, // Ready to harvest right away for instant fun!
+            growDuration: 4000,
+            bounce: 0
+          });
+        }
+      }
+
+      // Wild trees & boulders on the map that can be chopped/blasted with Axe/TNT
+      const props = [
+        { id: 'tree_1', type: 'pine', gx: 6, gy: 6 },
+        { id: 'tree_2', type: 'oak',  gx: 7, gy: 5 },
+        { id: 'tree_3', type: 'dead_tree', gx: 19, gy: 11 },
+        { id: 'tree_4', type: 'dead_tree', gx: 20, gy: 15 },
+        { id: 'tree_5', type: 'pine', gx: 9, gy: 21 },
+        { id: 'tree_6', type: 'oak',  gx: 25, gy: 20 },
+        { id: 'tree_7', type: 'pine', gx: 26, gy: 24 },
+        { id: 'rock_1', type: 'boulder', gx: 19, gy: 9 },
+        { id: 'rock_2', type: 'boulder', gx: 24, gy: 10 },
+        { id: 'rock_3', type: 'boulder', gx: 14, gy: 21 }
+      ];
+
+      return {
+        farmName: 'Thung Lũng Nắng Vàng',
+        level: 1,
+        xp: 0,
+        gold: 550,
+        diamonds: 30,
+        storageCap: 45,
+        barnLevel: 1,
+        tickets: 2,
+
+        // Inventory of crops, animal goods, fish, ores, crafted items
+        inventory: {
+          wheat: 6,
+          corn: 3,
+          carrot: 1,
+          egg: 2,
+          milk: 1,
+          bread: 1
+        },
+
+        // Rare upgrade materials & tools
+        materials: {
+          bolt: 2,
+          plank: 2,
+          tape: 2,
+          axe: 3,
+          tnt: 2,
+          pickaxe: 2,
+          lure: 2
+        },
+
+        // World Entities on 32x32 Grid
+        farmhouse: { gx: 10, gy: 9, size: 3, bounce: 0 },
+        silo:      { gx: 14, gy: 8, size: 2, bounce: 0 },
+        barn:      { gx: 17, gy: 8, size: 2, bounce: 0 },
+
+        plots: plots,
+
+        // Animal Pens placed on the map
+        animalPens: [
+          {
+            id: 'pen_coop_1', type: 'coop', gx: 9, gy: 14, size: 2,
+            status: 'ready', startedAt: Date.now() - 15000, duration: 15000, bounce: 0
+          }
+        ],
+
+        // Factories with Building Mastery (level 1 -> 5, queue slots, visual evolution)
+        factories: [
+          {
+            id: 'fac_bakery_1', type: 'bakery', gx: 18, gy: 13, size: 2,
+            level: 1, maxSlots: 2,
+            queue: [], // { recipeId, output, startedAt, duration }
+            readyOutputs: ['bread'], // Ready to collect right away!
+            totalCrafted: 1,
+            bounce: 0
+          }
+        ],
+
+        // Decorations placed on grid
+        decorations: [
+          { id: 'dec_1', type: 'lantern_post', gx: 12, gy: 12, size: 1 },
+          { id: 'dec_2', type: 'flower_bed',   gx: 12, gy: 10, size: 1 },
+          { id: 'dec_3', type: 'stone_path',   gx: 11, gy: 12, size: 1 },
+          { id: 'dec_4', type: 'stone_path',   gx: 11, gy: 13, size: 1 }
+        ],
+
+        props: props,
+
+        // Unlocked Peripheral Land Sectors
+        unlockedSectors: {},
+
+        // Roadside Shop (Lv.2) - 6 Stalls
+        roadsideStalls: [
+          { slot: 0, item: 'bread', qty: 1, price: 45, sold: true }, // 1 pre-sold bag of coins for instant demo!
+          { slot: 1, item: null, qty: 0, price: 0, sold: false },
+          { slot: 2, item: null, qty: 0, price: 0, sold: false },
+          { slot: 3, item: null, qty: 0, price: 0, sold: false },
+          { slot: 4, item: null, qty: 0, price: 0, sold: false },
+          { slot: 5, item: null, qty: 0, price: 0, sold: false }
+        ],
+
+        // Fishing Pond (Lv.3)
+        pondRepaired: false,
+        lastFishedAt: 0,
+
+        // Pets & Farmhand Helper (Lv.4)
+        petsUnlocked: false,
+        pets: [
+          { id: 'pet_dog', name: 'Cún Đốm Milo', type: 'dog', gx: 12.2, gy: 12.6, tx: 13, ty: 13, lastFed: 0, mood: 'happy' },
+          { id: 'pet_cat', name: 'Mèo Tam Thể Miu', type: 'cat', gx: 11.4, gy: 11.2, tx: 12, ty: 11, lastFed: 0, mood: 'happy' }
+        ],
+        farmhandUntil: 0, // Timestamp until Farmhand Tom works automatically
+
+        // Mine & Cliff (Lv.5)
+        mineUnlocked: false,
+
+        // Truck Delivery Orders
+        orders: [],
+
+        // Achievements progress & claimed flags
+        stats: {
+          totalHarvested: 2,
+          totalOrders: 0,
+          totalLuckyDrops: 1,
+          totalFished: 0,
+          maxFactoryLv: 1,
+          totalMined: 0
+        },
+        claimedAchievements: {}
+      };
+    }
+
+    function getXpNeeded(lv) {
+      return Math.floor(80 * Math.pow(1.42, lv - 1));
+    }
+
+    function getTotalStored() {
+      if (!state || !state.inventory) return 0;
+      return Object.values(state.inventory).reduce((acc, v) => acc + (v || 0), 0);
+    }
+
+    function addItem(itemId, qty) {
+      if (!state.inventory[itemId]) state.inventory[itemId] = 0;
+      state.inventory[itemId] = Math.max(0, state.inventory[itemId] + qty);
+      updateHUD();
+    }
+
+    function addMaterial(matId, qty) {
+      if (!state.materials[matId]) state.materials[matId] = 0;
+      state.materials[matId] = Math.max(0, state.materials[matId] + qty);
+      updateHUD();
+    }
+
+    function addXp(amount, worldGx, worldGy) {
+      const mult = state.level >= 6 ? 1.5 : 1;
+      const finalXp = Math.round(amount * mult);
+      state.xp += finalXp;
+      if (worldGx !== undefined && worldGy !== undefined) {
+        spawnCurvedFloatText(`+${finalXp} ⭐`, worldGx, worldGy, '#38bdf8', 'xp');
+      }
+
+      let leveledUp = false;
+      while (state.xp >= getXpNeeded(state.level)) {
+        state.xp -= getXpNeeded(state.level);
+        state.level++;
+        state.gold += state.level * 120;
+        state.diamonds += 5;
+        state.tickets += 1;
+        leveledUp = true;
+      }
+
+      if (leveledUp) {
+        playSound('levelup');
+        // Auto-unlock features tied to level
+        if (state.level >= 3) state.pondRepaired = true;
+        if (state.level >= 4) state.petsUnlocked = true;
+        if (state.level >= 5) state.mineUnlocked = true;
+        spawnFireworksAtGrid(state.farmhouse.gx + 1, state.farmhouse.gy + 1, 45);
+        spawnToastBanner(`🎉 THĂNG CẤP LV.${state.level}! Thưởng +${state.level * 120}🪙, +5💎, +1🎟️! ${LEVEL_UNLOCK_INFO[state.level] || ''}`);
+        generateOrdersIfNeeded();
+      }
+      updateHUD();
+      saveGame();
+    }
+
+    function saveGame() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = Object.assign(createInitialState(), parsed);
+          state.inventory = Object.assign(createInitialState().inventory, parsed.inventory || {});
+          state.materials = Object.assign(createInitialState().materials, parsed.materials || {});
+          state.stats = Object.assign(createInitialState().stats, parsed.stats || {});
+          if (!state.orders || state.orders.length === 0) generateOrdersIfNeeded();
+          return;
+        }
+      } catch (e) {}
+      state = createInitialState();
+      generateOrdersIfNeeded();
+    }
+    /*************************************************************************
+     * 4. 2.5D ISOMETRIC CAMERA, COORDINATE MATH & VISUAL FX ("GAME JUICE")
+     *************************************************************************/
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const cam = {
+      x: 0,
+      y: -180,
+      zoom: 1.0,
+      minZoom: 0.5,
+      maxZoom: 2.0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      camStartX: 0,
+      camStartY: 0,
+      movedDist: 0
+    };
+
+    // Hover & Brush State
+    let hoverGrid = { gx: -1, gy: -1 };
+    let activeBrush = 'interact'; // 'interact', 'harvest', 'feed', or crop id ('wheat', 'corn', etc.)
+    let isPointerDown = false;
+
+    // Edit/Move Mode State
+    let editMode = false;
+    let movingEntity = null; // { kind: 'plot'|'pen'|'factory'|'deco', ref: obj, origGx, origGy }
+
+    // Day / Sunset / Night & Weather State
+    let timePhase = 'day'; // 'day' | 'sunset' | 'night'
+    let timeCycleSeconds = 0;
+    let isRaining = false;
+    let rainTimer = 0;
+    let raindrops = [];
+
+    // Particles, Floating Curved Texts & Mystery Chest
+    let particles = [];
+    let floatTexts = [];
+    let mysteryChest = null; // { gx, gy, spawnedAt, pulse }
+    let chestTimer = 42;     // Spawns first mystery chest soon, then every 60s
+
+    // Delivery Truck Animation State
+    const truckAnim = {
+      active: false,
+      phase: 'idle', // 'idle' | 'departing' | 'returning'
+      progress: 0,
+      gx: 10.5,
+      gy: 17.2,
+      rewardGold: 0,
+      rewardXp: 0,
+      rewardDia: 0
+    };
+
+    // Pedestrian NPCs walking along the main road (gy = 18.2)
+    let pedestrians = [
+      { id: 1, name: 'Cô Tư', gx: 3, gy: 18.2, speed: 1.1, dir: 1, color: '#ec4899', hat: '#fef08a', pauseTimer: 0, bubble: null },
+      { id: 2, name: 'Bác Ba', gx: 26, gy: 18.6, speed: 0.9, dir: -1, color: '#3b82f6', hat: '#fde047', pauseTimer: 0, bubble: null }
+    ];
+
+    // Farmhand NPC Position (Lv.4 Helper)
+    const farmhandEntity = {
+      gx: 12.5,
+      gy: 13.5,
+      tx: 14,
+      ty: 15,
+      actionCooldown: 0,
+      bubble: '👨‍🌾'
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Standard 2:1 Isometric Projection: grid (gx, gy) -> screen (sx, sy)
+    function gridToScreen(gx, gy, zOffset = 0) {
+      const isoX = (gx - gy) * (TILE_W / 2);
+      const isoY = (gx + gy) * (TILE_H / 2) - zOffset;
+      const sx = canvas.width / 2 + (isoX + cam.x) * cam.zoom;
+      const sy = canvas.height / 2 + (isoY + cam.y) * cam.zoom;
+      return { x: sx, y: sy };
+    }
+
+    // Exact Inverse Projection: screen (sx, sy) -> grid (gx, gy)
+    function screenToGrid(sx, sy) {
+      const isoX = (sx - canvas.width / 2) / cam.zoom - cam.x;
+      const isoY = (sy - canvas.height / 2) / cam.zoom - cam.y;
+      const gx = (isoY / (TILE_H / 2) + isoX / (TILE_W / 2)) / 2;
+      const gy = (isoY / (TILE_H / 2) - isoX / (TILE_W / 2)) / 2;
+      return {
+        gx: Math.floor(gx),
+        gy: Math.floor(gy),
+        rawGx: gx,
+        rawGy: gy
+      };
+    }
+
+    function resetCamera() {
+      cam.x = 0;
+      cam.y = -210;
+      cam.zoom = 1.0;
+      updateZoomLabel();
+    }
+
+    function adjustZoom(delta, centerSx = canvas.width / 2, centerSy = canvas.height / 2) {
+      const oldZoom = cam.zoom;
+      const newZoom = Math.max(cam.minZoom, Math.min(cam.maxZoom, +(cam.zoom + delta).toFixed(2)));
+      if (newZoom === oldZoom) return;
+
+      // Keep cursor world point stable during zoom
+      const worldX = (centerSx - canvas.width / 2) / oldZoom - cam.x;
+      const worldY = (centerSy - canvas.height / 2) / oldZoom - cam.y;
+      cam.zoom = newZoom;
+      cam.x = (centerSx - canvas.width / 2) / newZoom - worldX;
+      cam.y = (centerSy - canvas.height / 2) / newZoom - worldY;
+      updateZoomLabel();
+    }
+
+    function updateZoomLabel() {
+      const el = document.getElementById('zoomLabel');
+      if (el) el.textContent = Math.round(cam.zoom * 100) + '%';
+    }
+
+    function panToZone(zone) {
+      playSound('pop');
+      let targetGx = 14, targetGy = 13;
+      if (zone === 'shop') { targetGx = 14; targetGy = 18; }
+      else if (zone === 'pond') { targetGx = 5; targetGy = 14; }
+      else if (zone === 'mine') { targetGx = 25; targetGy = 5; }
+      const isoX = (targetGx - targetGy) * (TILE_W / 2);
+      const isoY = (targetGx + targetGy) * (TILE_H / 2);
+      cam.x = -isoX;
+      cam.y = -isoY;
+    }
+
+    /*************************************************************************
+     * 5. PARTICLES, CURVED FLOATING HUD TEXT & LUCKY DROP MECHANIC (15%)
+     *************************************************************************/
+    function spawnParticlesAtGrid(gx, gy, color = '#facc15', count = 14) {
+      const pt = gridToScreen(gx + 0.5, gy + 0.5, 16);
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 4.5;
+        particles.push({
+          x: pt.x,
+          y: pt.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2.2,
+          size: 3 + Math.random() * 4,
+          color: color,
+          life: 1.0,
+          decay: 0.022 + Math.random() * 0.02
+        });
+      }
+    }
+
+    function spawnFireworksAtGrid(gx, gy, count = 40) {
+      const palette = ['#fde047', '#f43f5e', '#38bdf8', '#a855f7', '#4ade80', '#fb923c'];
+      const pt = gridToScreen(gx + 0.5, gy + 0.5, 30);
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 6.5;
+        particles.push({
+          x: pt.x,
+          y: pt.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 3.0,
+          size: 4 + Math.random() * 4.5,
+          color: palette[i % palette.length],
+          life: 1.2,
+          decay: 0.018 + Math.random() * 0.015
+        });
+      }
+    }
+
+    // Curved Floating Text that arcs toward the Top HUD Bar
+    function spawnCurvedFloatText(text, gx, gy, color = '#fde047', targetType = 'none') {
+      const start = gridToScreen(gx + 0.5, gy + 0.5, 28);
+      let tx = start.x + (Math.random() - 0.5) * 60;
+      let ty = start.y - 95;
+
+      if (targetType === 'gold') {
+        const box = document.getElementById('hudGoldBox');
+        if (box) { const r = box.getBoundingClientRect(); tx = r.left + r.width / 2; ty = r.top + r.height / 2; }
+      } else if (targetType === 'diamond') {
+        const box = document.getElementById('hudDiamondBox');
+        if (box) { const r = box.getBoundingClientRect(); tx = r.left + r.width / 2; ty = r.top + r.height / 2; }
+      } else if (targetType === 'barn') {
+        const box = document.getElementById('hudBarnBox');
+        if (box) { const r = box.getBoundingClientRect(); tx = r.left + r.width / 2; ty = r.top + r.height / 2; }
+      } else if (targetType === 'xp') {
+        const box = document.getElementById('hudLevel');
+        if (box) { const r = box.getBoundingClientRect(); tx = r.left + r.width / 2; ty = r.top + r.height / 2; }
+      }
+
+      floatTexts.push({
+        text,
+        sx: start.x,
+        sy: start.y,
+        cx: (start.x + tx) / 2 + (Math.random() - 0.5) * 90,
+        cy: Math.min(start.y, ty) - 70,
+        tx,
+        ty,
+        t: 0,
+        speed: targetType === 'none' ? 0.022 : 0.026,
+        color,
+        isRare: targetType === 'barn' || targetType === 'diamond'
+      });
+    }
+
+    function spawnToastBanner(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-50 wood-bar px-5 py-2.5 text-xs sm:text-sm font-black text-yellow-200 shadow-2xl border-2 border-yellow-300 transition-all duration-300';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -12px)';
+        setTimeout(() => toast.remove(), 320);
+      }, 3600);
+    }
+
+    // 15% LUCKY DROP MECHANIC (Bolt, Plank, Tape, Axe, TNT, Pickaxe, Golden Lure, Diamond, Ticket)
+    function rollLuckyDrop(gx, gy) {
+      if (Math.random() > 0.15) return; // 15% chance on harvest/collection
+
+      playSound('luckyDrop');
+      state.stats.totalLuckyDrops = (state.stats.totalLuckyDrops || 0) + 1;
+      spawnFireworksAtGrid(gx, gy, 24);
+
+      const pool = [
+        { kind: 'mat', id: 'bolt',    label: '+1 🔩 Đinh Ốc Hiếm!' },
+        { kind: 'mat', id: 'plank',   label: '+1 🪵 Ván Gỗ Hiếm!' },
+        { kind: 'mat', id: 'tape',    label: '+1 🎗️ Băng Keo Hiếm!' },
+        { kind: 'mat', id: 'axe',     label: '+1 🪓 Rìu Khai Phá!' },
+        { kind: 'mat', id: 'tnt',     label: '+1 🧨 Thuốc Nổ TNT!' },
+        { kind: 'mat', id: 'pickaxe', label: '+1 ⛏️ Cuốc Chim Mỏ!' },
+        { kind: 'mat', id: 'lure',    label: '+1 🪝 Mồi Câu Vàng!' },
+        { kind: 'dia', id: 'diamond', label: '+2 💎 Kim Cương Tím!' },
+        { kind: 'tic', id: 'ticket',  label: '+1 🎟️ Vé Vòng Quay!' }
+      ];
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      if (pick.kind === 'mat') {
+        addMaterial(pick.id, 1);
+        spawnCurvedFloatText(pick.label, gx, gy, '#fde047', 'barn');
+      } else if (pick.kind === 'dia') {
+        state.diamonds += 2;
+        spawnCurvedFloatText(pick.label, gx, gy, '#e879f9', 'diamond');
+      } else if (pick.kind === 'tic') {
+        state.tickets += 1;
+        spawnCurvedFloatText(pick.label, gx, gy, '#4ade80', 'none');
+      }
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 6. MYSTERY RED CHEST, WEATHER, TRUCK & AI HELPERS
+     *************************************************************************/
+    function spawnMysteryChestNow() {
+      const spots = [
+        { gx: 8, gy: 12 },
+        { gx: 15, gy: 11 },
+        { gx: 7, gy: 16 },
+        { gx: 18, gy: 16 },
+        { gx: 11, gy: 19 }
+      ];
+      const spot = spots[Math.floor(Math.random() * spots.length)];
+      mysteryChest = { gx: spot.gx, gy: spot.gy, spawnedAt: Date.now(), pulse: 0 };
+      const btn = document.getElementById('chestAlertBtn');
+      if (btn) btn.classList.remove('hidden');
+      playSound('luckyDrop');
+    }
+
+    function focusMysteryChest() {
+      if (!mysteryChest) return;
+      const isoX = (mysteryChest.gx - mysteryChest.gy) * (TILE_W / 2);
+      const isoY = (mysteryChest.gx + mysteryChest.gy) * (TILE_H / 2);
+      cam.x = -isoX;
+      cam.y = -isoY;
+    }
+
+    function openMysteryChest() {
+      if (!mysteryChest) return;
+      const { gx, gy } = mysteryChest;
+      playSound('levelup');
+      spawnFireworksAtGrid(gx, gy, 36);
+
+      const goldWon = 90 + state.level * 45;
+      const diaWon = 3;
+      const matKeys = ['bolt', 'plank', 'tape', 'tnt', 'lure'];
+      const randMat = matKeys[Math.floor(Math.random() * matKeys.length)];
+
+      state.gold += goldWon;
+      state.diamonds += diaWon;
+      addMaterial(randMat, 1);
+
+      spawnCurvedFloatText(`🎁 +${goldWon} 🪙`, gx, gy, '#fde047', 'gold');
+      spawnCurvedFloatText(`+${diaWon} 💎`, gx - 0.4, gy, '#e879f9', 'diamond');
+      spawnCurvedFloatText(`+1 ${MATERIALS[randMat].icon} ${MATERIALS[randMat].name}!`, gx + 0.4, gy, '#4ade80', 'barn');
+
+      mysteryChest = null;
+      const btn = document.getElementById('chestAlertBtn');
+      if (btn) btn.classList.add('hidden');
+      updateHUD();
+      saveGame();
+    }
+
+    function toggleRainEvent() {
+      isRaining = !isRaining;
+      if (isRaining) {
+        rainTimer = 45; // Rains for 45 seconds
+        playSound('splash');
+        spawnToastBanner('🌧️ Cơn mưa rào mát lành kéo đến! Toàn bộ cây trồng lớn nhanh gấp đôi (2x)!');
+      } else {
+        rainTimer = 0;
+      }
+      updateEnvironmentHUD();
+    }
+
+    function cycleTimeOfDay() {
+      if (timePhase === 'day') timePhase = 'sunset';
+      else if (timePhase === 'sunset') timePhase = 'night';
+      else timePhase = 'day';
+      playSound('pop');
+      updateEnvironmentHUD();
+    }
+
+    function updateEnvironmentHUD() {
+      const iconEl = document.getElementById('hudTimeIcon');
+      const labelEl = document.getElementById('hudTimeLabel');
+      const descEl = document.getElementById('hudWeatherDesc');
+      if (!iconEl || !labelEl || !descEl) return;
+
+      if (timePhase === 'day') {
+        iconEl.textContent = isRaining ? '🌦️' : '☀️';
+        labelEl.textContent = isRaining ? 'Mưa Rào Ban Ngày' : 'Ban Ngày Nắng Ấm';
+      } else if (timePhase === 'sunset') {
+        iconEl.textContent = isRaining ? '⛈️' : '🌇';
+        labelEl.textContent = 'Hoàng Hôn Rực Rỡ';
+      } else {
+        iconEl.textContent = '🌙';
+        labelEl.textContent = 'Đêm Đèn Lồng Lung Linh';
+      }
+      descEl.textContent = isRaining ? '⚡ Tốc độ cây trồng: 200% (Mưa rào!)' : '🌱 Tốc độ cây trồng: 100%';
+    }
+    /*************************************************************************
+     * 7. FARMING, ANIMALS, FACTORIES, PETS & LAND EXPANSION LOGIC
+     *************************************************************************/
+    function isCropRipe(plot) {
+      if (!plot.crop) return false;
+      return (Date.now() - plot.plantedAt) >= plot.growDuration;
+    }
+
+    function plantCropOnPlot(plot, cropId) {
+      if (plot.crop) return false;
+      const cDef = CROPS[cropId];
+      if (!cDef) return false;
+      if (state.level < cDef.unlockLv) {
+        spawnToastBanner(`🔒 Cần đạt Cấp ${cDef.unlockLv} để trồng ${cDef.name}!`);
+        return false;
+      }
+      if (state.gold < cDef.seedCost) {
+        spawnToastBanner(`🪙 Không đủ Vàng mua hạt giống ${cDef.name} (${cDef.seedCost}🪙)!`);
+        return false;
+      }
+
+      state.gold -= cDef.seedCost;
+      plot.crop = cropId;
+      plot.plantedAt = Date.now();
+      plot.growDuration = cDef.growTime * 1000;
+      plot.bounce = 1.0;
+
+      playSound('pop');
+      spawnParticlesAtGrid(plot.gx, plot.gy, '#84cc16', 8);
+      spawnCurvedFloatText(`-${cDef.seedCost}🪙 ${cDef.icon}`, plot.gx, plot.gy, '#fef08a', 'none');
+      updateHUD();
+      saveGame();
+      return true;
+    }
+
+    function harvestPlot(plot) {
+      if (!plot.crop || !isCropRipe(plot)) return false;
+      if (getTotalStored() >= state.storageCap) {
+        spawnToastBanner('📦 Kho đã đầy! Hãy bán hàng hoặc nâng cấp Kho (Barn/Silo)!');
+        openModal('barnModal');
+        return false;
+      }
+
+      const cDef = CROPS[plot.crop];
+      plot.crop = null;
+      plot.plantedAt = 0;
+      plot.bounce = 1.2;
+
+      addItem(cDef.id, 2); // Harvest yields 2 crops!
+      state.stats.totalHarvested = (state.stats.totalHarvested || 0) + 1;
+
+      playSound('harvest');
+      spawnParticlesAtGrid(plot.gx, plot.gy, cDef.colorTop, 16);
+      spawnCurvedFloatText(`+2 ${cDef.icon} ${cDef.name}`, plot.gx, plot.gy, '#fde047', 'barn');
+      addXp(cDef.xp, plot.gx, plot.gy);
+
+      // 15% Lucky Drop roll!
+      rollLuckyDrop(plot.gx, plot.gy);
+      updateHUD();
+      saveGame();
+      return true;
+    }
+
+    function interactAnimalPen(pen) {
+      const def = ANIMAL_PENS[pen.type];
+      if (!def) return;
+      const now = Date.now();
+      const isReady = pen.status === 'ready' || (pen.status === 'producing' && (now - pen.startedAt >= pen.duration));
+
+      if (isReady) {
+        if (getTotalStored() >= state.storageCap) {
+          spawnToastBanner('📦 Kho đã đầy! Hãy nâng cấp Kho trước khi thu gom!');
+          return;
+        }
+        pen.status = 'hungry';
+        pen.bounce = 1.2;
+        addItem(def.output, 1);
+        const itemDef = ITEMS[def.output];
+        playSound('harvest');
+        spawnParticlesAtGrid(pen.gx + 0.5, pen.gy + 0.5, '#fef08a', 16);
+        spawnCurvedFloatText(`+1 ${itemDef.icon} ${itemDef.name}`, pen.gx, pen.gy, '#fde047', 'barn');
+        addXp(def.xp, pen.gx, pen.gy);
+        rollLuckyDrop(pen.gx, pen.gy);
+        updateHUD();
+        saveGame();
+      } else if (pen.status === 'hungry') {
+        const feedCrop = def.feedCrop;
+        const have = state.inventory[feedCrop] || 0;
+        if (have < def.feedQty) {
+          // Allow instant feed with small gold if out of crop so player never gets stuck
+          const feedGold = CROPS[feedCrop].sellPrice;
+          if (state.gold >= feedGold) {
+            state.gold -= feedGold;
+            spawnCurvedFloatText(`Mua thức ăn -${feedGold}🪙`, pen.gx, pen.gy, '#fde08a', 'none');
+          } else {
+            spawnToastBanner(`🌾 Cần 1 ${ITEMS[feedCrop].name} để cho ${def.name} ăn!`);
+            return;
+          }
+        } else {
+          addItem(feedCrop, -def.feedQty);
+        }
+        pen.status = 'producing';
+        pen.startedAt = Date.now();
+        pen.duration = def.prodTime * 1000;
+        pen.bounce = 1.0;
+        playSound('pop');
+        spawnParticlesAtGrid(pen.gx + 0.5, pen.gy + 0.5, '#4ade80', 12);
+        spawnCurvedFloatText(`🥣 Đã cho ăn!`, pen.gx, pen.gy, '#86efac', 'none');
+        updateHUD();
+        saveGame();
+      } else {
+        const leftSec = Math.ceil((pen.duration - (now - pen.startedAt)) / 1000);
+        spawnCurvedFloatText(`⏳ Còn ${leftSec}s`, pen.gx, pen.gy, '#ffffff', 'none');
+      }
+    }
+
+    function updateFactoriesProgress() {
+      const now = Date.now();
+      let changed = false;
+      for (const fac of state.factories) {
+        while (fac.queue.length > 0) {
+          const head = fac.queue[0];
+          if (now - head.startedAt >= head.duration) {
+            fac.readyOutputs.push(head.output);
+            fac.queue.shift();
+            if (fac.queue.length > 0) {
+              fac.queue[0].startedAt = now;
+            }
+            changed = true;
+          } else {
+            break;
+          }
+        }
+      }
+      if (changed) updateHUD();
+    }
+
+    function collectFactoryOutputs(fac) {
+      if (!fac.readyOutputs || fac.readyOutputs.length === 0) {
+        openModal('factoriesModal');
+        return;
+      }
+      if (getTotalStored() >= state.storageCap) {
+        spawnToastBanner('📦 Kho đã đầy! Hãy nâng cấp Kho trước khi lấy thành phẩm!');
+        openModal('barnModal');
+        return;
+      }
+
+      const outId = fac.readyOutputs.shift();
+      const itemDef = ITEMS[outId];
+      addItem(outId, 1);
+      fac.totalCrafted = (fac.totalCrafted || 0) + 1;
+      fac.bounce = 1.25;
+
+      // Mastery bonus XP
+      const fDef = FACTORIES[fac.type];
+      const rec = fDef.recipes.find(r => r.output === outId);
+      const baseXp = rec ? rec.xp : 20;
+      const bonusXp = Math.round(baseXp * (1 + (fac.level - 1) * 0.15));
+
+      playSound('harvest');
+      spawnParticlesAtGrid(fac.gx + 0.5, fac.gy + 0.5, '#facc15', 18);
+      spawnCurvedFloatText(`+1 ${itemDef.icon} ${itemDef.name}`, fac.gx, fac.gy, '#fde047', 'barn');
+      addXp(bonusXp, fac.gx, fac.gy);
+      rollLuckyDrop(fac.gx, fac.gy);
+      updateHUD();
+      saveGame();
+    }
+
+    function clearWildProp(prop) {
+      const isTree = prop.type !== 'boulder';
+      const toolId = isTree ? 'axe' : 'tnt';
+      const toolName = isTree ? '🪓 Rìu Sắt' : '🧨 Thuốc Nổ TNT';
+
+      if ((state.materials[toolId] || 0) <= 0) {
+        spawnToastBanner(`Cần 1 ${toolName} để dọn ${isTree ? 'cây hoang' : 'tảng đá'} này!`);
+        return;
+      }
+
+      addMaterial(toolId, -1);
+      state.props = state.props.filter(p => p.id !== prop.id);
+
+      if (isTree) {
+        playSound('harvest');
+        addMaterial('plank', 1);
+        spawnParticlesAtGrid(prop.gx, prop.gy, '#a3e635', 22);
+        spawnCurvedFloatText(`+1 🪵 Ván Gỗ!`, prop.gx, prop.gy, '#fde047', 'barn');
+        addXp(18, prop.gx, prop.gy);
+      } else {
+        playSound('explosion');
+        addItem('silver_ore', 1);
+        spawnFireworksAtGrid(prop.gx, prop.gy, 28);
+        spawnCurvedFloatText(`+1 🪨 Quặng Bạc!`, prop.gx, prop.gy, '#38bdf8', 'barn');
+        addXp(25, prop.gx, prop.gy);
+      }
+      saveGame();
+    }
+
+    function interactPet(pet) {
+      if (state.level < 4 && !state.petsUnlocked) {
+        spawnToastBanner('🔒 Chuồng Thú Cưng mở khóa ở Cấp 4!');
+        return;
+      }
+      playSound('pet');
+      spawnParticlesAtGrid(pet.gx, pet.gy, '#f43f5e', 18);
+      spawnCurvedFloatText(`❤️ ${pet.name} vui sướng!`, pet.gx, pet.gy, '#fda4af', 'none');
+      addXp(12, pet.gx, pet.gy);
+
+      // 35% chance for pet to dig up a rare material when petted/fed!
+      if (Math.random() < 0.35) {
+        rollLuckyDrop(pet.gx, pet.gy);
+      }
+    }
+
+    function unlockLandSector(secId) {
+      const sec = LAND_SECTORS.find(s => s.id === secId);
+      if (!sec || state.unlockedSectors[secId]) return;
+
+      if (state.level < sec.reqLv) {
+        spawnToastBanner(`🔒 Cần đạt Cấp ${sec.reqLv} để mở rộng ${sec.name}!`);
+        return;
+      }
+      if (state.gold < sec.costGold) {
+        spawnToastBanner(`🪙 Cần ${sec.costGold} Vàng để giải phóng mặt bằng ${sec.name}!`);
+        return;
+      }
+      for (const [mKey, mQty] of Object.entries(sec.reqMat)) {
+        if ((state.materials[mKey] || 0) < mQty) {
+          spawnToastBanner(`🔩 Thiếu ${mQty} ${MATERIALS[mKey].name} để mở rộng vùng đất này!`);
+          return;
+        }
+      }
+
+      state.gold -= sec.costGold;
+      for (const [mKey, mQty] of Object.entries(sec.reqMat)) {
+        addMaterial(mKey, -mQty);
+      }
+      state.unlockedSectors[secId] = true;
+
+      playSound('levelup');
+      spawnFireworksAtGrid(sec.gx + sec.w / 2, sec.gy + sec.h / 2, 55);
+      spawnToastBanner(`🎆 Đã giải phóng mặt bằng: ${sec.name}! Nhận +60 XP!`);
+      addXp(60, sec.gx + 2, sec.gy + 2);
+      renderShopModal();
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 8. EDIT / MOVE MODE (CHẾ ĐỘ QUY HOẠCH ISOMETRIC)
+     *************************************************************************/
+    function toggleEditMode(forceVal) {
+      editMode = typeof forceVal === 'boolean' ? forceVal : !editMode;
+      movingEntity = null;
+      const banner = document.getElementById('editModeBanner');
+      const dockBtn = document.getElementById('btnEditDock');
+      if (banner) banner.classList.toggle('hidden', !editMode);
+      if (dockBtn) dockBtn.style.filter = editMode ? 'drop-shadow(0 0 12px #fde047)' : '';
+      playSound('pop');
+    }
+
+    function isTilePlacementValid(gx, gy, size = 1, ignoreRef = null) {
+      if (gx < 2 || gy < 2 || gx + size > GRID_SIZE - 2 || gy + size > GRID_SIZE - 2) return false;
+      // Avoid river/pond water tiles (gx <= 7, gy >= 11 && gy <= 18) and main road (gy === 18)
+      for (let x = gx; x < gx + size; x++) {
+        for (let y = gy; y < gy + size; y++) {
+          if (y === 18 || y === 17) return false; // Main road
+          if (x <= 7 && y >= 11 && y <= 17) return false; // Fishing pond
+        }
+      }
+      return true;
+    }
+
+    /*************************************************************************
+     * 9. AI SYSTEMS: PEDESTRIAN ROADSIDE BUYERS & FARMHAND TOM (LV.4)
+     *************************************************************************/
+    function updatePedestriansAndFarmhand(dt) {
+      // 1. Update Pedestrian NPCs along main road (gy ~ 18.2)
+      for (const npc of pedestrians) {
+        if (npc.pauseTimer > 0) {
+          npc.pauseTimer -= dt;
+          if (npc.pauseTimer <= 0) npc.bubble = null;
+          continue;
+        }
+        npc.gx += npc.dir * npc.speed * dt;
+        if (npc.gx > 29) { npc.dir = -1; }
+        if (npc.gx < 2)  { npc.dir = 1; }
+
+        // Check if passing Roadside Shop (around gx = 14.5) and level >= 2
+        if (state.level >= 2 && Math.abs(npc.gx - 14.5) < 0.35 && Math.random() < 0.45) {
+          const activeSlot = state.roadsideStalls.find(s => s.item && !s.sold);
+          if (activeSlot) {
+            activeSlot.sold = true;
+            npc.pauseTimer = 2.2;
+            npc.bubble = `Mua ${ITEMS[activeSlot.item].icon} +${activeSlot.price}🪙!`;
+            playSound('coin');
+            spawnParticlesAtGrid(14.5, 17.2, '#fde047', 12);
+            updateHUD();
+            saveGame();
+          }
+        }
+      }
+
+      // 2. Update Pets roaming around central farm
+      if (state.level >= 4 || state.petsUnlocked) {
+        for (const pet of state.pets) {
+          const dx = pet.tx - pet.gx;
+          const dy = pet.ty - pet.gy;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 0.15) {
+            pet.tx = 9 + Math.random() * 9;
+            pet.ty = 10 + Math.random() * 6;
+          } else {
+            pet.gx += (dx / dist) * 1.1 * dt;
+            pet.gy += (dy / dist) * 1.1 * dt;
+          }
+        }
+      }
+
+      // 3. Update Farmhand Helper (Quản Gia Tom) if active
+      const now = Date.now();
+      const pill = document.getElementById('farmhandStatusPill');
+      if (state.farmhandUntil > now) {
+        if (pill) {
+          pill.classList.remove('hidden');
+          const remSec = Math.ceil((state.farmhandUntil - now) / 1000);
+          const mm = String(Math.floor(remSec / 60)).padStart(2, '0');
+          const ss = String(remSec % 60).padStart(2, '0');
+          document.getElementById('farmhandTimerText').textContent = `${mm}:${ss}`;
+        }
+
+        farmhandEntity.actionCooldown -= dt;
+        const dx = farmhandEntity.tx - farmhandEntity.gx;
+        const dy = farmhandEntity.ty - farmhandEntity.gy;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.2) {
+          farmhandEntity.gx += (dx / dist) * 2.0 * dt;
+          farmhandEntity.gy += (dy / dist) * 2.0 * dt;
+        } else if (farmhandEntity.actionCooldown <= 0) {
+          farmhandEntity.actionCooldown = 1.6;
+          // Look for ripe plot, empty plot, or ready animal pen
+          const ripePlot = state.plots.find(p => isCropRipe(p));
+          const emptyPlot = state.plots.find(p => !p.crop);
+          const readyPen = state.animalPens.find(p => p.status === 'ready' || (p.status === 'producing' && now - p.startedAt >= p.duration));
+          const hungryPen = state.animalPens.find(p => p.status === 'hungry');
+
+          if (ripePlot && getTotalStored() < state.storageCap) {
+            farmhandEntity.tx = ripePlot.gx;
+            farmhandEntity.ty = ripePlot.gy;
+            harvestPlot(ripePlot);
+          } else if (emptyPlot && state.gold >= 2) {
+            farmhandEntity.tx = emptyPlot.gx;
+            farmhandEntity.ty = emptyPlot.gy;
+            plantCropOnPlot(emptyPlot, 'wheat');
+          } else if (readyPen && getTotalStored() < state.storageCap) {
+            farmhandEntity.tx = readyPen.gx;
+            farmhandEntity.ty = readyPen.gy;
+            interactAnimalPen(readyPen);
+          } else if (hungryPen) {
+            farmhandEntity.tx = hungryPen.gx;
+            farmhandEntity.ty = hungryPen.gy;
+            interactAnimalPen(hungryPen);
+          } else {
+            farmhandEntity.tx = 12 + Math.random() * 5;
+            farmhandEntity.ty = 13 + Math.random() * 4;
+          }
+        }
+      } else {
+        if (pill) pill.classList.add('hidden');
+      }
+    }
+    /*************************************************************************
+     * 10. PROCEDURAL 2.5D ISOMETRIC RENDERING ENGINE & PAINTER'S ALGORITHM
+     *************************************************************************/
+    function drawIsoTile(gx, gy, fillStyle, strokeStyle = 'rgba(255,255,255,0.08)', zOffset = 0) {
+      const pTop   = gridToScreen(gx, gy, zOffset);
+      const pRight = gridToScreen(gx + 1, gy, zOffset);
+      const pBot   = gridToScreen(gx + 1, gy + 1, zOffset);
+      const pLeft  = gridToScreen(gx, gy + 1, zOffset);
+
+      ctx.beginPath();
+      ctx.moveTo(pTop.x, pTop.y);
+      ctx.lineTo(pRight.x, pRight.y);
+      ctx.lineTo(pBot.x, pBot.y);
+      ctx.lineTo(pLeft.x, pLeft.y);
+      ctx.closePath();
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+      if (strokeStyle) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = Math.max(0.8, 1 * cam.zoom);
+        ctx.stroke();
+      }
+    }
+
+    // Draw a 2.5D 3D extruded isometric prism covering [gx..gx+w, gy..gy+d] with height hPx (in world z units)
+    function drawIsoPrism(gx, gy, w, d, hPx, topColor, leftColor, rightColor, zBase = 0) {
+      const top0  = gridToScreen(gx,     gy,     zBase + hPx);
+      const right0= gridToScreen(gx + w, gy,     zBase + hPx);
+      const bot0  = gridToScreen(gx + w, gy + d, zBase + hPx);
+      const left0 = gridToScreen(gx,     gy + d, zBase + hPx);
+
+      const rightB= gridToScreen(gx + w, gy,     zBase);
+      const botB  = gridToScreen(gx + w, gy + d, zBase);
+      const leftB = gridToScreen(gx,     gy + d, zBase);
+
+      // Left Wall
+      ctx.beginPath();
+      ctx.moveTo(left0.x, left0.y);
+      ctx.lineTo(bot0.x, bot0.y);
+      ctx.lineTo(botB.x, botB.y);
+      ctx.lineTo(leftB.x, leftB.y);
+      ctx.closePath();
+      ctx.fillStyle = leftColor;
+      ctx.fill();
+
+      // Right Wall
+      ctx.beginPath();
+      ctx.moveTo(bot0.x, bot0.y);
+      ctx.lineTo(right0.x, right0.y);
+      ctx.lineTo(rightB.x, rightB.y);
+      ctx.lineTo(botB.x, botB.y);
+      ctx.closePath();
+      ctx.fillStyle = rightColor;
+      ctx.fill();
+
+      // Top Face
+      ctx.beginPath();
+      ctx.moveTo(top0.x, top0.y);
+      ctx.lineTo(right0.x, right0.y);
+      ctx.lineTo(bot0.x, bot0.y);
+      ctx.lineTo(left0.x, left0.y);
+      ctx.closePath();
+      ctx.fillStyle = topColor;
+      ctx.fill();
+    }
+
+    // Draw glowing window/lantern light in Sunset/Night mode
+    function drawNightLanternGlow(gx, gy, zOffset = 20, radius = 48) {
+      if (timePhase === 'day') return;
+      const pt = gridToScreen(gx, gy, zOffset);
+      const r = radius * cam.zoom * (timePhase === 'night' ? 1.25 : 0.8);
+      const grad = ctx.createRadialGradient(pt.x, pt.y, 2, pt.x, pt.y, r);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
+      grad.addColorStop(0.45, 'rgba(245, 158, 11, 0.35)');
+      grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+      ctx.save();
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw Floating Pill Label above an entity on the 2.5D map
+    function drawWorldBadge(gx, gy, zOffset, text, bg = 'rgba(69,26,3,0.88)', textColor = '#fef08a') {
+      const pt = gridToScreen(gx, gy, zOffset);
+      ctx.save();
+      ctx.font = `900 ${Math.max(10, Math.round(11 * cam.zoom))}px "Segoe UI", sans-serif`;
+      const padX = 7 * cam.zoom;
+      const w = ctx.measureText(text).width + padX * 2;
+      const h = 20 * cam.zoom;
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(pt.x - w / 2, pt.y - h / 2, w, h, 8 * cam.zoom);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, pt.x, pt.y + 0.5);
+      ctx.restore();
+    }
+
+    // 1. RENDER FARMHOUSE (Evolves with Player Level!)
+    function drawFarmhouse(fh, timeSec) {
+      const { gx, gy } = fh;
+      // Shadow base
+      drawIsoPrism(gx, gy, 2.6, 2.6, 4, '#78350f', '#451a03', '#290f02', 0);
+      // First floor walls
+      drawIsoPrism(gx + 0.2, gy + 0.2, 2.2, 2.2, 34, '#fffbeb', '#fef3c7', '#fde68a', 4);
+      // Second floor (Villa style)
+      drawIsoPrism(gx + 0.4, gy + 0.4, 1.7, 1.7, 26, '#fff7ed', '#ffedd5', '#fed7aa', 38);
+      // Red/Golden Roof depending on Farm Level
+      const isHighLv = state.level >= 4;
+      const roofTop  = isHighLv ? '#f59e0b' : '#ef4444';
+      const roofLeft = isHighLv ? '#d97706' : '#dc2626';
+      const roofRight= isHighLv ? '#b45309' : '#991b1b';
+      drawIsoPrism(gx + 0.25, gy + 0.25, 2.0, 2.0, 14, roofTop, roofLeft, roofRight, 64);
+      drawIsoPrism(gx + 0.55, gy + 0.55, 1.4, 1.4, 10, roofTop, roofLeft, roofRight, 78);
+
+      // Warm windows & Night Lanterns
+      drawNightLanternGlow(gx + 1.5, gy + 2.2, 24, 65);
+      drawNightLanternGlow(gx + 2.2, gy + 1.5, 24, 65);
+
+      const centerPt = gridToScreen(gx + 1.3, gy + 1.3, 98 + Math.sin(timeSec * 2.5) * 3);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(state.level >= 4 ? '🏰' : '🏡', centerPt.x, centerPt.y);
+      ctx.restore();
+      drawWorldBadge(gx + 1.3, gy + 1.3, 118, `${state.farmName} (Lv.${state.level})`);
+    }
+
+    // 2. RENDER SILO & BARN
+    function drawSiloAndBarn(timeSec) {
+      // Silo (Cylindrical/Octagonal tower look)
+      const s = state.silo;
+      drawIsoPrism(s.gx, s.gy, 1.7, 1.7, 54, '#ef4444', '#dc2626', '#991b1b', 0);
+      drawIsoPrism(s.gx - 0.05, s.gy - 0.05, 1.8, 1.8, 14, '#e2e8f0', '#cbd5e1', '#94a3b8', 54);
+      drawWorldBadge(s.gx + 0.8, s.gy + 0.8, 82, `🌾 Silo Lv.${state.barnLevel}`);
+
+      // Barn (Red Hay Day Barn with Hay Bales)
+      const b = state.barn;
+      drawIsoPrism(b.gx, b.gy, 2.1, 2.1, 44, '#ef4444', '#b91c1c', '#7f1d1d', 0);
+      drawIsoPrism(b.gx - 0.1, b.gy - 0.1, 2.3, 2.3, 16, '#f8fafc', '#cbd5e1', '#64748b', 44);
+      // Golden Hay bale beside Barn
+      drawIsoPrism(b.gx + 1.6, b.gy + 2.1, 0.6, 0.6, 12, '#fde047', '#eab308', '#ca8a04', 0);
+      drawNightLanternGlow(b.gx + 1.2, b.gy + 2.1, 22, 55);
+      drawWorldBadge(b.gx + 1.0, b.gy + 1.0, 76, `📦 Kho ${getTotalStored()}/${state.storageCap}`);
+    }
+
+    // 3. RENDER CROP PLOT
+    function drawCropPlot(plot, timeSec) {
+      if (plot.bounce > 0) plot.bounce = Math.max(0, plot.bounce - 0.08);
+      const zLift = plot.bounce * 8;
+
+      const isHovered = hoverGrid.gx === plot.gx && hoverGrid.gy === plot.gy;
+      const soilTop = plot.crop ? '#78350f' : (isHovered ? '#a16207' : '#854d0e');
+      drawIsoPrism(plot.gx + 0.06, plot.gy + 0.06, 0.88, 0.88, 5, soilTop, '#5c2d0c', '#451a03', zLift);
+
+      // Furrow lines on soil
+      const cPt = gridToScreen(plot.gx + 0.5, plot.gy + 0.5, 6 + zLift);
+
+      if (plot.crop) {
+        const cDef = CROPS[plot.crop];
+        const elapsed = Date.now() - plot.plantedAt;
+        const prog = Math.min(1, elapsed / plot.growDuration);
+
+        if (prog < 1) {
+          // Growing sprouts
+          const h = 6 + prog * 14;
+          drawIsoPrism(plot.gx + 0.28, plot.gy + 0.28, 0.44, 0.44, h, '#4ade80', '#22c55e', '#15803d', 5 + zLift);
+          const rem = Math.ceil((plot.growDuration - elapsed) / 1000);
+          drawWorldBadge(plot.gx + 0.5, plot.gy + 0.5, 28, `${cDef.icon} ${rem}s`, 'rgba(20,83,45,0.85)', '#bbf7d0');
+        } else {
+          // RIPE CROP! Swaying + Golden Sparkle
+          const sway = Math.sin(timeSec * 4 + plot.gx) * 3 * cam.zoom;
+          drawIsoPrism(plot.gx + 0.2, plot.gy + 0.2, 0.6, 0.6, 16, cDef.colorTop, cDef.colorStem, cDef.colorStem, 5 + zLift);
+          ctx.save();
+          ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(cDef.icon, cPt.x + sway, cPt.y - 16 * cam.zoom);
+          ctx.restore();
+        }
+      }
+    }
+
+    // 4. RENDER ANIMAL PEN (Coop, Cowshed, Sheep Pen)
+    function drawAnimalPen(pen, timeSec) {
+      const def = ANIMAL_PENS[pen.type];
+      if (pen.bounce > 0) pen.bounce = Math.max(0, pen.bounce - 0.08);
+      const zLift = pen.bounce * 10;
+
+      // Pasture base & wooden fence rails
+      drawIsoPrism(pen.gx, pen.gy, 1.9, 1.9, 5, '#84cc16', '#65a30d', '#4d7c0f', zLift);
+      // Small shed inside pen
+      const shedColor = pen.type === 'coop' ? '#f59e0b' : (pen.type === 'cowshed' ? '#ef4444' : '#3b82f6');
+      drawIsoPrism(pen.gx + 0.15, pen.gy + 0.15, 0.85, 0.85, 24, shedColor, '#9a3412', '#7c2d12', 5 + zLift);
+
+      // Hopping animals inside pen!
+      const now = Date.now();
+      const isReady = pen.status === 'ready' || (pen.status === 'producing' && (now - pen.startedAt >= pen.duration));
+
+      for (let i = 0; i < 2; i++) {
+        const ax = pen.gx + 0.9 + (i * 0.45) + Math.sin(timeSec * 2 + i) * 0.12;
+        const ay = pen.gy + 1.0 + (i * 0.35) + Math.cos(timeSec * 2.3 + i) * 0.12;
+        const hop = Math.abs(Math.sin(timeSec * 5 + i * 2)) * 8;
+        const apt = gridToScreen(ax, ay, 8 + hop + zLift);
+        ctx.save();
+        ctx.font = `${Math.round(21 * cam.zoom)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(def.icon, apt.x, apt.y);
+        ctx.restore();
+      }
+
+      drawNightLanternGlow(pen.gx + 1.0, pen.gy + 1.0, 18, 45);
+
+      if (isReady) {
+        const outItem = ITEMS[def.output];
+        drawWorldBadge(pen.gx + 0.95, pen.gy + 0.95, 48 + Math.sin(timeSec * 5) * 4, `✨ Thu ${outItem.icon} ${outItem.name}!`, 'rgba(22,101,52,0.95)', '#fef08a');
+      } else if (pen.status === 'hungry') {
+        const feedItem = ITEMS[def.feedCrop];
+        drawWorldBadge(pen.gx + 0.95, pen.gy + 0.95, 45, `🥣 Cho ăn ${feedItem.icon}`, 'rgba(153,27,27,0.9)', '#fecaca');
+      } else {
+        const rem = Math.ceil((pen.duration - (now - pen.startedAt)) / 1000);
+        drawWorldBadge(pen.gx + 0.95, pen.gy + 0.95, 45, `⏳ ${rem}s`, 'rgba(30,58,138,0.88)', '#bae6fd');
+      }
+    }
+
+    // 5. RENDER FACTORY WITH GOLDEN MASTERY VISUAL EVOLUTION (Lv.1 -> Lv.5)
+    function drawFactoryBuilding(fac, timeSec) {
+      const def = FACTORIES[fac.type];
+      if (!def) return;
+      if (fac.bounce > 0) fac.bounce = Math.max(0, fac.bounce - 0.08);
+      const zLift = fac.bounce * 10;
+
+      const isGoldenMastery = fac.level >= 3;
+      const scaleH = 34 + fac.level * 4; // Grows taller and grander as upgraded!
+
+      // Foundation
+      drawIsoPrism(fac.gx, fac.gy, 1.9, 1.9, 6, '#64748b', '#475569', '#334155', zLift);
+      // Main Building Body
+      drawIsoPrism(fac.gx + 0.15, fac.gy + 0.15, 1.6, 1.6, scaleH, def.wallColor, '#e2e8f0', '#cbd5e1', 6 + zLift);
+
+      // Roof: Evolves to Shimmering Gold-Plated Roof at Mastery Lv.3 - Lv.5!
+      const roofTop   = isGoldenMastery ? '#fde047' : def.roofColor;
+      const roofLeft  = isGoldenMastery ? '#f59e0b' : def.roofColor;
+      const roofRight = isGoldenMastery ? '#b45309' : '#1e293b';
+      drawIsoPrism(fac.gx + 0.08, fac.gy + 0.08, 1.74, 1.74, 14, roofTop, roofLeft, roofRight, 6 + scaleH + zLift);
+
+      // Chimney & Star Smoke when crafting or Golden Mastery
+      drawIsoPrism(fac.gx + 0.3, fac.gy + 0.3, 0.35, 0.35, 18, '#78350f', '#451a03', '#290f02', 20 + scaleH + zLift);
+      const chimneyPt = gridToScreen(fac.gx + 0.45, fac.gy + 0.45, 42 + scaleH + zLift + (timeSec * 18 % 22));
+      ctx.save();
+      ctx.font = `${Math.round(14 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(isGoldenMastery ? '⭐' : (fac.queue.length > 0 ? '💨' : '✨'), chimneyPt.x, chimneyPt.y);
+      ctx.restore();
+
+      drawNightLanternGlow(fac.gx + 1.0, fac.gy + 1.5, 24, 58);
+
+      // Mastery Stars String
+      const stars = '⭐'.repeat(Math.min(3, Math.floor((fac.level + 1) / 2)));
+      const centerPt = gridToScreen(fac.gx + 0.95, fac.gy + 0.95, 26 + scaleH + zLift);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(def.icon, centerPt.x, centerPt.y);
+      ctx.restore();
+
+      if (fac.readyOutputs && fac.readyOutputs.length > 0) {
+        const firstOut = ITEMS[fac.readyOutputs[0]];
+        drawWorldBadge(
+          fac.gx + 0.95, fac.gy + 0.95, 58 + scaleH + Math.sin(timeSec * 6) * 4,
+          `🎁 Nhận ${firstOut.icon} (${fac.readyOutputs.length})!`,
+          'rgba(21,128,61,0.95)', '#fef08a'
+        );
+      } else if (fac.queue && fac.queue.length > 0) {
+        const head = fac.queue[0];
+        const rem = Math.max(1, Math.ceil((head.duration - (Date.now() - head.startedAt)) / 1000));
+        drawWorldBadge(
+          fac.gx + 0.95, fac.gy + 0.95, 55 + scaleH,
+          `⚙️ ${ITEMS[head.output].icon} ${rem}s`,
+          'rgba(30,64,175,0.92)', '#e0f2fe'
+        );
+      } else {
+        drawWorldBadge(
+          fac.gx + 0.95, fac.gy + 0.95, 54 + scaleH,
+          `${def.name} Lv.${fac.level} ${stars}`
+        );
+      }
+    }
+    // 6. RENDER ROADSIDE SHOP (Lv.2 Zone)
+    function drawRoadsideShop(timeSec) {
+      const gx = 14, gy = 16.5;
+      const unlocked = state.level >= 2;
+      drawIsoPrism(gx, gy, 1.8, 1.1, 24, '#fef3c7', '#fde68a', '#f59e0b', 0);
+      // Striped Awning Roof
+      drawIsoPrism(gx - 0.1, gy - 0.1, 2.0, 1.3, 10, unlocked ? '#ef4444' : '#64748b', '#dc2626', '#991b1b', 24);
+      drawNightLanternGlow(gx + 0.9, gy + 0.6, 22, 55);
+
+      const soldCount = state.roadsideStalls.filter(s => s.sold).length;
+      const pt = gridToScreen(gx + 0.9, gy + 0.5, 42);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(soldCount > 0 ? '💰' : '🏪', pt.x, pt.y);
+      ctx.restore();
+
+      if (!unlocked) {
+        drawWorldBadge(gx + 0.9, gy + 0.5, 58, '🔒 Sạp Ven Đường (Mở Lv.2)', 'rgba(51,65,85,0.9)', '#cbd5e1');
+      } else if (soldCount > 0) {
+        drawWorldBadge(
+          gx + 0.9, gy + 0.5, 60 + Math.sin(timeSec * 6) * 4,
+          `💰 Thu ${soldCount} túi tiền!`,
+          'rgba(21,128,61,0.95)', '#fef08a'
+        );
+      } else {
+        drawWorldBadge(gx + 0.9, gy + 0.5, 58, '🏪 Quầy Bán Hàng');
+      }
+    }
+
+    // 7. RENDER FISHING POND, LILY PADS & WOODEN ARCH BRIDGE (Lv.3 Zone)
+    function drawFishingPondAndBridge(timeSec) {
+      // Wooden Dock at (7.2, 14)
+      const unlocked = state.level >= 3 || state.pondRepaired;
+      drawIsoPrism(6.8, 13.8, 1.6, 1.1, 7, unlocked ? '#b45309' : '#64748b', '#78350f', '#451a03', 2);
+
+      // Animated Fish & Lily Pads in Pond (gx: 2..7, gy: 11..17)
+      const lilySpots = [
+        { gx: 3.5, gy: 12.5 }, { gx: 5.2, gy: 13.2 },
+        { gx: 4.1, gy: 15.4 }, { gx: 5.8, gy: 16.0 }
+      ];
+      for (const lp of lilySpots) {
+        const lpt = gridToScreen(lp.gx, lp.gy, 2);
+        ctx.save();
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.ellipse(lpt.x, lpt.y, 11 * cam.zoom, 5.5 * cam.zoom, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = `${Math.round(12 * cam.zoom)}px sans-serif`;
+        ctx.fillText('🪷', lpt.x - 5 * cam.zoom, lpt.y);
+        ctx.restore();
+      }
+
+      // Jumping Fish animation
+      const fishPt = gridToScreen(4.6 + Math.sin(timeSec * 1.5) * 0.8, 14.2, Math.max(0, Math.sin(timeSec * 3.5) * 14));
+      ctx.save();
+      ctx.font = `${Math.round(18 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🐟', fishPt.x, fishPt.y);
+      ctx.restore();
+
+      // Arched Wooden Bridge over the Pond Channel at (gx: 6..8, gy: 18)
+      drawIsoPrism(5.8, 17.6, 2.4, 1.2, 12, '#d97706', '#92400e', '#78350f', 4);
+      drawNightLanternGlow(7.0, 18.0, 22, 50);
+
+      if (!unlocked) {
+        drawWorldBadge(7.2, 14.2, 36, '🔒 Hồ Câu & Ngọc Trai (Mở Lv.3)', 'rgba(51,65,85,0.9)', '#cbd5e1');
+      } else {
+        drawWorldBadge(7.2, 14.2, 38 + Math.sin(timeSec * 4) * 3, '🎣 Bến Câu Cá & Ngọc Trai', 'rgba(3,105,161,0.95)', '#e0f2fe');
+      }
+    }
+
+    // 8. RENDER NORTHEAST CLIFF MINE & RAIL CART (Lv.5 Zone)
+    function drawMineAndCliff(timeSec) {
+      const gx = 24, gy = 4;
+      const unlocked = state.level >= 5 || state.mineUnlocked;
+      // Big Rocky Mountain Cliff
+      drawIsoPrism(gx, gy, 3.5, 3.0, 62, '#64748b', '#475569', '#334155', 0);
+      drawIsoPrism(gx + 0.5, gy + 0.4, 2.4, 2.0, 32, '#94a3b8', '#64748b', '#475569', 62);
+      // Dark Mine Tunnel Portal
+      drawIsoPrism(gx + 0.9, gy + 2.3, 1.4, 0.8, 30, '#92400e', '#1e293b', '#0f172a', 0);
+      // Glowing Gold & Diamond Crystals on the cliff
+      const gemPt = gridToScreen(gx + 1.8, gy + 1.6, 72);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('💎⛏️🪙', gemPt.x, gemPt.y);
+      ctx.restore();
+
+      drawNightLanternGlow(gx + 1.5, gy + 2.8, 20, 60);
+
+      if (!unlocked) {
+        drawWorldBadge(gx + 1.6, gy + 2.5, 56, '🔒 Vách Núi Hầm Mỏ (Mở Lv.5)', 'rgba(51,65,85,0.92)', '#cbd5e1');
+      } else {
+        drawWorldBadge(gx + 1.6, gy + 2.5, 58 + Math.sin(timeSec * 4) * 3, '⛏️ Hầm Mỏ Quặng Vàng & Kim Cương!', 'rgba(124,45,18,0.95)', '#fde047');
+      }
+    }
+
+    // 9. RENDER ORDER BOARD & ANIMATED DELIVERY TRUCK
+    function drawOrderBoardAndTruck(timeSec) {
+      // Order Board at (9.6, 16.5)
+      drawIsoPrism(9.5, 16.3, 1.1, 0.6, 24, '#b45309', '#78350f', '#451a03', 0);
+      drawWorldBadge(10.0, 16.5, 42, '📋 Bảng Đơn Hàng');
+
+      // Delivery Truck along road (gy = 17.6)
+      const tx = truckAnim.gx;
+      const ty = truckAnim.gy;
+      const rumble = truckAnim.active ? Math.sin(timeSec * 28) * 2 : 0;
+
+      // Truck Cargo & Cab
+      drawIsoPrism(tx, ty, 1.5, 0.9, 20, '#ef4444', '#dc2626', '#991b1b', 4 + rumble);
+      drawIsoPrism(tx - 0.5, ty + 0.05, 0.55, 0.8, 15, '#38bdf8', '#0284c7', '#0369a1', 4 + rumble);
+      drawNightLanternGlow(tx - 0.5, ty + 0.4, 12, 48);
+
+      const tpt = gridToScreen(tx + 0.5, ty + 0.4, 32 + rumble);
+      ctx.save();
+      ctx.font = `${Math.round(20 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(truckAnim.phase === 'returning' ? '💰🚚' : '🚚', tpt.x, tpt.y);
+      ctx.restore();
+    }
+
+    // 10. RENDER WILD PROPS, DECORATIONS, PETS, NPCS & MYSTERY CHEST
+    function drawWildProp(prop, timeSec) {
+      if (prop.type === 'boulder') {
+        drawIsoPrism(prop.gx + 0.1, prop.gy + 0.1, 0.8, 0.8, 16, '#94a3b8', '#64748b', '#475569', 0);
+        const pt = gridToScreen(prop.gx + 0.5, prop.gy + 0.5, 22);
+        ctx.save();
+        ctx.font = `${Math.round(18 * cam.zoom)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('🪨', pt.x, pt.y);
+        ctx.restore();
+      } else {
+        // Pine / Oak / Dead Tree
+        drawIsoPrism(prop.gx + 0.35, prop.gy + 0.35, 0.3, 0.3, 14, '#78350f', '#5c2d0c', '#451a03', 0);
+        const leafColor = prop.type === 'dead_tree' ? '#d97706' : (prop.type === 'pine' ? '#15803d' : '#22c55e');
+        drawIsoPrism(prop.gx + 0.15, prop.gy + 0.15, 0.7, 0.7, 22, leafColor, '#166534', '#14532d', 14);
+        const pt = gridToScreen(prop.gx + 0.5, prop.gy + 0.5, 42);
+        ctx.save();
+        ctx.font = `${Math.round(19 * cam.zoom)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(prop.type === 'dead_tree' ? '🍂' : '🌲', pt.x, pt.y);
+        ctx.restore();
+      }
+    }
+
+    function drawDecoration(dec, timeSec) {
+      const def = DECORATIONS[dec.type];
+      if (!def) return;
+      if (dec.type === 'stone_path') {
+        drawIsoPrism(dec.gx + 0.08, dec.gy + 0.08, 0.84, 0.84, 3, '#cbd5e1', '#94a3b8', '#64748b', 0);
+        return;
+      }
+      if (dec.type === 'lantern_post') {
+        drawIsoPrism(dec.gx + 0.4, dec.gy + 0.4, 0.2, 0.2, 26, '#fbbf24', '#475569', '#1e293b', 0);
+        drawNightLanternGlow(dec.gx + 0.5, dec.gy + 0.5, 28, 70);
+      }
+      const pt = gridToScreen(dec.gx + 0.5, dec.gy + 0.5, 18);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(def.icon, pt.x, pt.y);
+      ctx.restore();
+    }
+
+    function drawCharacter(gx, gy, emoji, label, bubble, timeSec) {
+      const hop = Math.abs(Math.sin(timeSec * 6 + gx)) * 6;
+      const pt = gridToScreen(gx, gy, 14 + hop);
+      ctx.save();
+      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(emoji, pt.x, pt.y);
+      ctx.restore();
+      if (bubble) {
+        drawWorldBadge(gx, gy, 38 + hop, bubble, 'rgba(254,240,138,0.95)', '#451a03');
+      } else if (label) {
+        drawWorldBadge(gx, gy, 34 + hop, label);
+      }
+    }
+
+    // MASTER 2.5D WORLD RENDER LOOP
+    function renderWorld(timeSec) {
+      // Sky / Water Background Gradient depending on Day / Sunset / Night
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      if (timePhase === 'day') {
+        bgGrad.addColorStop(0, '#38bdf8');
+        bgGrad.addColorStop(1, '#15803d');
+      } else if (timePhase === 'sunset') {
+        bgGrad.addColorStop(0, '#f97316');
+        bgGrad.addColorStop(0.5, '#db2777');
+        bgGrad.addColorStop(1, '#365314');
+      } else {
+        bgGrad.addColorStop(0, '#090d16');
+        bgGrad.addColorStop(0.5, '#1e1b4b');
+        bgGrad.addColorStop(1, '#062e1e');
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 1. RENDER 32x32 ISOMETRIC GROUND TILES
+      for (let gx = 0; gx < GRID_SIZE; gx++) {
+        for (let gy = 0; gy < GRID_SIZE; gy++) {
+          let tileColor = (gx + gy) % 2 === 0 ? '#65a30d' : '#4d7c0f';
+
+          // Main Cobblestone / Dirt Road at gy = 18
+          if (gy === 18) {
+            tileColor = (gx + gy) % 2 === 0 ? '#d6b37c' : '#c29b61';
+          }
+          // Fishing Pond & Stream Water (gx <= 7, gy 11..18)
+          else if (gx <= 7 && gy >= 11 && gy <= 18) {
+            const wave = Math.sin(timeSec * 3 + gx * 0.7 + gy * 0.5) * 8;
+            tileColor = wave > 0 ? '#0284c7' : '#0369a1';
+          }
+          // Northeast Cliff Rocky Floor (gx >= 22, gy <= 7)
+          else if (gx >= 22 && gy <= 7) {
+            tileColor = (gx + gy) % 2 === 0 ? '#64748b' : '#475569';
+          }
+
+          // Highlight Hovered Grid Tile
+          if (hoverGrid.gx === gx && hoverGrid.gy === gy) {
+            tileColor = '#fde047';
+          }
+
+          drawIsoTile(gx, gy, tileColor);
+        }
+      }
+
+      // 2. RENDER LOCKED PERIPHERAL LAND SECTORS (Fenced Outlines + Signposts)
+      for (const sec of LAND_SECTORS) {
+        if (state.unlockedSectors[sec.id]) continue;
+        // Draw translucent locked boundary
+        for (let x = sec.gx; x < sec.gx + sec.w; x++) {
+          for (let y = sec.gy; y < sec.gy + sec.h; y++) {
+            if (x === sec.gx || x === sec.gx + sec.w - 1 || y === sec.gy || y === sec.gy + sec.h - 1) {
+              drawIsoTile(x, y, 'rgba(120, 53, 15, 0.32)', 'rgba(253, 224, 71, 0.45)');
+            }
+          }
+        }
+        drawWorldBadge(
+          sec.gx + sec.w / 2, sec.gy + sec.h / 2, 22,
+          `🪧 ${sec.name} (Lv.${sec.reqLv} • ${sec.costGold}🪙)`,
+          'rgba(69,26,3,0.92)', '#fde047'
+        );
+      }
+
+      // 3. COLLECT ALL 2.5D ENTITIES & SORT BY DEPTH (PAINTER'S ALGORITHM: gx + gy)
+      const renderList = [];
+
+      renderList.push({ depth: state.farmhouse.gx + state.farmhouse.gy + 2.5, draw: () => drawFarmhouse(state.farmhouse, timeSec) });
+      renderList.push({ depth: state.silo.gx + state.silo.gy + 1.6, draw: () => drawSiloAndBarn(timeSec) });
+      renderList.push({ depth: 14 + 16.5 + 1.2, draw: () => drawRoadsideShop(timeSec) });
+      renderList.push({ depth: 6.5 + 14.5, draw: () => drawFishingPondAndBridge(timeSec) });
+      renderList.push({ depth: 24 + 4 + 2.5, draw: () => drawMineAndCliff(timeSec) });
+      renderList.push({ depth: truckAnim.gx + truckAnim.gy + 1.2, draw: () => drawOrderBoardAndTruck(timeSec) });
+
+      for (const plot of state.plots) {
+        renderList.push({ depth: plot.gx + plot.gy + 0.5, draw: () => drawCropPlot(plot, timeSec) });
+      }
+      for (const pen of state.animalPens) {
+        renderList.push({ depth: pen.gx + pen.gy + 1.8, draw: () => drawAnimalPen(pen, timeSec) });
+      }
+      for (const fac of state.factories) {
+        renderList.push({ depth: fac.gx + fac.gy + 1.8, draw: () => drawFactoryBuilding(fac, timeSec) });
+      }
+      for (const prop of state.props) {
+        renderList.push({ depth: prop.gx + prop.gy + 0.7, draw: () => drawWildProp(prop, timeSec) });
+      }
+      for (const dec of state.decorations) {
+        renderList.push({ depth: dec.gx + dec.gy + 0.4, draw: () => drawDecoration(dec, timeSec) });
+      }
+
+      // Pets (Lv.4)
+      if (state.level >= 4 || state.petsUnlocked) {
+        for (const pet of state.pets) {
+          renderList.push({
+            depth: pet.gx + pet.gy + 0.6,
+            draw: () => drawCharacter(pet.gx, pet.gy, pet.type === 'dog' ? '🐶' : '🐱', pet.name, null, timeSec)
+          });
+        }
+      }
+
+      // Farmhand Helper (Quản Gia Tom)
+      if (state.farmhandUntil > Date.now()) {
+        renderList.push({
+          depth: farmhandEntity.gx + farmhandEntity.gy + 0.6,
+          draw: () => drawCharacter(farmhandEntity.gx, farmhandEntity.gy, '👨‍🌾', 'Quản Gia Tom', null, timeSec)
+        });
+      }
+
+      // Pedestrian NPCs on the main road
+      for (const npc of pedestrians) {
+        renderList.push({
+          depth: npc.gx + npc.gy + 0.6,
+          draw: () => drawCharacter(npc.gx, npc.gy, npc.id === 1 ? '👩‍🌾' : '🧑‍🌾', null, npc.bubble, timeSec)
+        });
+      }
+
+      // Mystery Red Chest
+      if (mysteryChest) {
+        renderList.push({
+          depth: mysteryChest.gx + mysteryChest.gy + 0.8,
+          draw: () => {
+            const bounce = Math.abs(Math.sin(timeSec * 5)) * 10;
+            drawIsoPrism(mysteryChest.gx + 0.2, mysteryChest.gy + 0.2, 0.6, 0.6, 12, '#ef4444', '#b91c1c', '#7f1d1d', bounce);
+            drawNightLanternGlow(mysteryChest.gx + 0.5, mysteryChest.gy + 0.5, 16, 55);
+            drawWorldBadge(mysteryChest.gx + 0.5, mysteryChest.gy + 0.5, 36 + bounce, '🎁 Rương Kho Báu Đỏ!', 'rgba(185,28,28,0.95)', '#fef08a');
+          }
+        });
+      }
+
+      // Sort by depth ascending (back-to-front Painter's Algorithm)
+      renderList.sort((a, b) => a.depth - b.depth);
+      for (const item of renderList) {
+        item.draw();
+      }
+
+      // Edit Mode Ghost Preview if moving an entity
+      if (editMode && movingEntity && hoverGrid.gx >= 0) {
+        const size = movingEntity.ref.size || 1;
+        const valid = isTilePlacementValid(hoverGrid.gx, hoverGrid.gy, size, movingEntity.ref);
+        for (let x = 0; x < size; x++) {
+          for (let y = 0; y < size; y++) {
+            drawIsoTile(
+              hoverGrid.gx + x, hoverGrid.gy + y,
+              valid ? 'rgba(74, 222, 128, 0.55)' : 'rgba(248, 113, 113, 0.65)',
+              '#ffffff', 4
+            );
+          }
+        }
+      }
+
+      // 4. DAY / SUNSET / NIGHT AMBIENT COLOR OVERLAY
+      if (timePhase === 'sunset') {
+        ctx.fillStyle = 'rgba(249, 115, 22, 0.16)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (timePhase === 'night') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // 5. RANDOM RAIN SHOWER OVERLAY (2x Crop Speed)
+      if (isRaining) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+        ctx.lineWidth = 1.6;
+        for (const drop of raindrops) {
+          ctx.beginPath();
+          ctx.moveTo(drop.x, drop.y);
+          ctx.lineTo(drop.x - 9, drop.y + 22);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // 6. RENDER PARTICLES & CURVED FLOATING HUD TEXTS
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.14; // gravity
+        p.life -= p.decay;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (let i = floatTexts.length - 1; i >= 0; i--) {
+        const ft = floatTexts[i];
+        ft.t += ft.speed;
+        if (ft.t >= 1) {
+          floatTexts.splice(i, 1);
+          continue;
+        }
+        // Quadratic Bezier interpolation
+        const u = 1 - ft.t;
+        const x = u * u * ft.sx + 2 * u * ft.t * ft.cx + ft.t * ft.t * ft.tx;
+        const y = u * u * ft.sy + 2 * u * ft.t * ft.cy + ft.t * ft.t * ft.ty;
+        const scale = ft.isRare ? (1 + Math.sin(ft.t * Math.PI) * 0.35) : 1;
+
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (1 - ft.t) * 1.6);
+        ctx.font = `900 ${Math.round(15 * scale)}px "Segoe UI", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#3b1802';
+        ctx.lineWidth = 4;
+        ctx.strokeText(ft.text, x, y);
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, x, y);
+        ctx.restore();
+      }
+    }
+    /*************************************************************************
+     * 11. INPUT HANDLING: PAN, ZOOM, HOLD-TO-SWEEP BRUSH & WORLD CLICKS
+     *************************************************************************/
+    function handleGridBrushSweep(gx, gy) {
+      if (gx < 0 || gy < 0 || gx >= GRID_SIZE || gy >= GRID_SIZE) return false;
+      const plot = state.plots.find(p => p.gx === gx && p.gy === gy);
+
+      if (activeBrush === 'harvest') {
+        if (plot && isCropRipe(plot)) return harvestPlot(plot);
+        return false;
+      }
+      if (activeBrush === 'feed') {
+        const pen = state.animalPens.find(a => gx >= a.gx && gx < a.gx + a.size && gy >= a.gy && gy < a.gy + a.size);
+        if (pen) { interactAnimalPen(pen); return true; }
+        return false;
+      }
+      if (CROPS[activeBrush]) {
+        if (plot) {
+          if (isCropRipe(plot)) harvestPlot(plot);
+          if (!plot.crop) return plantCropOnPlot(plot, activeBrush);
+        }
+        return false;
+      }
+      return false;
+    }
+
+    function handleWorldClick(gx, gy) {
+      // 1. Check Mystery Chest first!
+      if (mysteryChest && Math.abs(gx - mysteryChest.gx) <= 1 && Math.abs(gy - mysteryChest.gy) <= 1) {
+        openMysteryChest();
+        return;
+      }
+
+      // 2. Edit/Move Mode Handling
+      if (editMode) {
+        if (movingEntity) {
+          const size = movingEntity.ref.size || 1;
+          if (isTilePlacementValid(gx, gy, size, movingEntity.ref)) {
+            movingEntity.ref.gx = gx;
+            movingEntity.ref.gy = gy;
+            movingEntity.ref.bounce = 1.2;
+            playSound('harvest');
+            spawnParticlesAtGrid(gx, gy, '#fde047', 16);
+            movingEntity = null;
+            document.getElementById('editModeHint').textContent = 'Đã đặt thành công! Click công trình khác để di chuyển hoặc bấm Thoát.';
+            saveGame();
+          } else {
+            spawnToastBanner('⚠️ Vị trí này vướng đường đi hoặc mặt nước, hãy chọn ô cỏ xanh khác!');
+          }
+          return;
+        } else {
+          // Try picking up plot, animal pen, factory, or decoration
+          const plot = state.plots.find(p => p.gx === gx && p.gy === gy);
+          if (plot) {
+            movingEntity = { kind: 'plot', ref: plot };
+            playSound('pop');
+            document.getElementById('editModeHint').textContent = 'Đang nhấc Ô Đất — Click sang vị trí mới trên bản đồ để đặt xuống!';
+            return;
+          }
+          const pen = state.animalPens.find(a => gx >= a.gx && gx < a.gx + a.size && gy >= a.gy && gy < a.gy + a.size);
+          if (pen) {
+            movingEntity = { kind: 'pen', ref: pen };
+            playSound('pop');
+            document.getElementById('editModeHint').textContent = `Đang nhấc ${ANIMAL_PENS[pen.type].name} — Click sang vị trí mới để đặt!`;
+            return;
+          }
+          const fac = state.factories.find(f => gx >= f.gx && gx < f.gx + f.size && gy >= f.gy && gy < f.gy + f.size);
+          if (fac) {
+            movingEntity = { kind: 'factory', ref: fac };
+            playSound('pop');
+            document.getElementById('editModeHint').textContent = `Đang nhấc ${FACTORIES[fac.type].name} — Click sang vị trí mới để đặt!`;
+            return;
+          }
+          const dec = state.decorations.find(d => d.gx === gx && d.gy === gy);
+          if (dec) {
+            movingEntity = { kind: 'deco', ref: dec };
+            playSound('pop');
+            document.getElementById('editModeHint').textContent = `Đang nhấc ${DECORATIONS[dec.type].name} — Click sang vị trí mới để đặt!`;
+            return;
+          }
+          return;
+        }
+      }
+
+      // 3. Check Crop Plot
+      const plot = state.plots.find(p => p.gx === gx && p.gy === gy);
+      if (plot) {
+        if (isCropRipe(plot)) {
+          harvestPlot(plot);
+        } else if (!plot.crop) {
+          const seedToPlant = CROPS[activeBrush] ? activeBrush : 'wheat';
+          plantCropOnPlot(plot, seedToPlant);
+        } else {
+          const rem = Math.ceil((plot.growDuration - (Date.now() - plot.plantedAt)) / 1000);
+          spawnCurvedFloatText(`⏳ Còn ${rem}s`, plot.gx, plot.gy, '#bae6fd', 'none');
+        }
+        return;
+      }
+
+      // 4. Check Animal Pens
+      const pen = state.animalPens.find(a => gx >= a.gx && gx < a.gx + a.size && gy >= a.gy && gy < a.gy + a.size);
+      if (pen) {
+        interactAnimalPen(pen);
+        return;
+      }
+
+      // 5. Check Factories
+      const fac = state.factories.find(f => gx >= f.gx && gx < f.gx + f.size && gy >= f.gy && gy < f.gy + f.size);
+      if (fac) {
+        collectFactoryOutputs(fac);
+        return;
+      }
+
+      // 6. Check Pets
+      if (state.level >= 4 || state.petsUnlocked) {
+        const pet = state.pets.find(p => Math.hypot(p.gx - gx, p.gy - gy) < 1.3);
+        if (pet) {
+          interactPet(pet);
+          return;
+        }
+      }
+
+      // 7. Check Wild Trees & Rocks
+      const prop = state.props.find(p => p.gx === gx && p.gy === gy);
+      if (prop) {
+        clearWildProp(prop);
+        return;
+      }
+
+      // 8. Check Roadside Shop (gx: 13..16, gy: 16..18)
+      if (gx >= 13 && gx <= 16 && gy >= 16 && gy <= 18) {
+        const soldStalls = state.roadsideStalls.filter(s => s.sold);
+        if (soldStalls.length > 0) {
+          collectAllRoadsideCoins();
+        } else {
+          openModal('roadsideModal');
+        }
+        return;
+      }
+
+      // 9. Check Order Board & Delivery Truck (gx: 9..12, gy: 16..18)
+      if (gx >= 9 && gx <= 12 && gy >= 16 && gy <= 18) {
+        openModal('ordersModal');
+        return;
+      }
+
+      // 10. Check Silo & Barn (gx: 14..19, gy: 7..10)
+      if (gx >= 14 && gx <= 19 && gy >= 7 && gy <= 10) {
+        openModal('barnModal');
+        return;
+      }
+
+      // 11. Check Farmhouse (gx: 10..12, gy: 9..11)
+      if (gx >= 10 && gx <= 12 && gy >= 9 && gy <= 11) {
+        openModal('achievementsModal');
+        return;
+      }
+
+      // 12. Check Fishing Pond & Dock (gx <= 8, gy: 11..17)
+      if (gx <= 8 && gy >= 11 && gy <= 17) {
+        openModal('animalsModal');
+        return;
+      }
+
+      // 13. Check Northeast Mine & Cliff (gx >= 23, gy <= 7)
+      if (gx >= 23 && gy <= 7) {
+        openModal('shopModal');
+        return;
+      }
+
+      // 14. Check Locked Peripheral Land Sectors
+      const lockedSec = LAND_SECTORS.find(s => !state.unlockedSectors[s.id] && gx >= s.gx && gx < s.gx + s.w && gy >= s.gy && gy < s.gy + s.h);
+      if (lockedSec) {
+        unlockLandSector(lockedSec.id);
+        return;
+      }
+    }
+
+    // Pointer / Mouse Events on Canvas
+    canvas.addEventListener('pointerdown', (e) => {
+      isPointerDown = true;
+      cam.dragStartX = e.clientX;
+      cam.dragStartY = e.clientY;
+      cam.camStartX = cam.x;
+      cam.camStartY = cam.y;
+      cam.movedDist = 0;
+
+      const g = screenToGrid(e.clientX, e.clientY);
+      hoverGrid = { gx: g.gx, gy: g.gy };
+
+      // If player selected a Hold-and-Sweep Brush (Crop seed, Sickle, or Feed), apply immediately on drag without panning!
+      if (activeBrush !== 'interact' && !editMode) {
+        handleGridBrushSweep(g.gx, g.gy);
+        cam.isDragging = false;
+      } else {
+        cam.isDragging = true;
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      const g = screenToGrid(e.clientX, e.clientY);
+      hoverGrid = { gx: g.gx, gy: g.gy };
+
+      if (!isPointerDown) return;
+
+      if (activeBrush !== 'interact' && !editMode) {
+        // Hold-to-sweep across plots!
+        handleGridBrushSweep(g.gx, g.gy);
+        return;
+      }
+
+      if (cam.isDragging) {
+        const dx = e.clientX - cam.dragStartX;
+        const dy = e.clientY - cam.dragStartY;
+        cam.movedDist = Math.hypot(dx, dy);
+        cam.x = cam.camStartX + dx / cam.zoom;
+        cam.y = cam.camStartY + dy / cam.zoom;
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+      const wasClick = cam.movedDist < 7;
+      cam.isDragging = false;
+
+      if (wasClick) {
+        const g = screenToGrid(e.clientX, e.clientY);
+        handleWorldClick(g.gx, g.gy);
+      }
+    });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.14 : -0.14;
+      adjustZoom(delta, e.clientX, e.clientY);
+    }, { passive: false });
+
+    /*************************************************************************
+     * 12. BOTTOM BRUSH BAR & TOP HUD UPDATER
+     *************************************************************************/
+    function renderBrushBar() {
+      const container = document.getElementById('brushBarContainer');
+      if (!container) return;
+
+      const tools = [
+        { id: 'interact', label: '🖐️ Kéo Bản Đồ / Tương Tác', unlockLv: 1 },
+        { id: 'harvest',  label: '🌾 Liềm Gặt Nhanh',        unlockLv: 1 },
+        { id: 'feed',     label: '🥣 Cho Vật Nuôi Ăn',       unlockLv: 1 }
+      ];
+
+      for (const c of Object.values(CROPS)) {
+        tools.push({
+          id: c.id,
+          label: `${c.icon} ${c.name} (${c.seedCost}🪙)`,
+          unlockLv: c.unlockLv
+        });
+      }
+
+      container.innerHTML = tools.map(t => {
+        const locked = state.level < t.unlockLv;
+        const isActive = activeBrush === t.id;
+        return `
+          <button
+            onclick="selectBrush('${t.id}')"
+            ${locked ? 'disabled' : ''}
+            class="brush-item btn-juice parchment-card px-2.5 py-1.5 text-xs font-black whitespace-nowrap flex items-center gap-1 ${isActive ? 'active' : ''}"
+          >
+            <span>${locked ? '🔒 ' + t.label + ' (Lv.' + t.unlockLv + ')' : t.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectBrush(brushId) {
+      activeBrush = brushId;
+      playSound('pop');
+      renderBrushBar();
+    }
+
+    function updateHUD() {
+      if (!state) return;
+      document.getElementById('hudLevel').textContent = state.level;
+      document.getElementById('hudFarmName').textContent = '🏡 ' + state.farmName;
+      const needed = getXpNeeded(state.level);
+      document.getElementById('hudXpText').textContent = `${state.xp} / ${needed} ⭐`;
+      const pct = Math.min(100, Math.round((state.xp / needed) * 100));
+      document.getElementById('hudXpBar').style.width = pct + '%';
+
+      const nextLv = state.level + 1;
+      document.getElementById('hudNextUnlock').textContent =
+        LEVEL_UNLOCK_INFO[nextLv] ? `🔜 Lv.${nextLv}: ${LEVEL_UNLOCK_INFO[nextLv]}` : '👑 Đã mở khóa toàn bộ công nghệ Nông Trại!';
+
+      document.getElementById('hudGold').textContent = state.gold.toLocaleString('vi-VN');
+      document.getElementById('hudDiamonds').textContent = state.diamonds.toLocaleString('vi-VN');
+      document.getElementById('hudStorage').textContent = `${getTotalStored()} / ${state.storageCap}`;
+
+      // Update Dock Badges
+      const bOrders = document.getElementById('badgeOrders');
+      if (bOrders) bOrders.textContent = (state.orders || []).length;
+
+      const soldCount = state.roadsideStalls.filter(s => s.sold).length;
+      const bRoad = document.getElementById('badgeRoadside');
+      if (bRoad) {
+        bRoad.classList.toggle('hidden', soldCount === 0);
+        bRoad.textContent = soldCount;
+      }
+
+      const readyFacCount = state.factories.reduce((acc, f) => acc + (f.readyOutputs ? f.readyOutputs.length : 0), 0);
+      const bFac = document.getElementById('badgeFactories');
+      if (bFac) {
+        bFac.classList.toggle('hidden', readyFacCount === 0);
+        bFac.textContent = readyFacCount;
+      }
+
+      const bTickets = document.getElementById('badgeTickets');
+      if (bTickets) {
+        bTickets.classList.toggle('hidden', (state.tickets || 0) <= 0);
+        bTickets.textContent = state.tickets || 0;
+      }
+
+      // Check claimable achievements
+      const claimableAch = ACHIEVEMENTS_DEF.filter(a => (state.stats[a.stat] || 0) >= a.target && !state.claimedAchievements[a.id]).length;
+      const bAch = document.getElementById('badgeAchieve');
+      if (bAch) {
+        bAch.classList.toggle('hidden', claimableAch === 0);
+        bAch.textContent = claimableAch;
+      }
+
+      renderBrushBar();
+    }
+
+    function renameFarmPrompt() {
+      const name = prompt('Nhập tên mới cho Nông Trại của bạn:', state.farmName);
+      if (name && name.trim()) {
+        state.farmName = name.trim().slice(0, 28);
+        updateHUD();
+        saveGame();
+      }
+    }
+    /*************************************************************************
+     * 13. MODAL CONTROLLERS: ORDERS, BARN, ROADSIDE, ACHIEVEMENTS & FISHING
+     *************************************************************************/
+    function openModal(id) {
+      playSound('pop');
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('open');
+      if (id === 'ordersModal') renderOrdersModal();
+      if (id === 'barnModal') renderBarnModal();
+      if (id === 'roadsideModal') renderRoadsideModal();
+      if (id === 'achievementsModal') renderAchievementsModal();
+      if (id === 'animalsModal') renderAnimalsModal();
+      if (id === 'factoriesModal') renderFactoriesModal();
+      if (id === 'shopModal') renderShopModal();
+      if (id === 'wheelModal') renderWheelModal();
+    }
+
+    function closeModal(id) {
+      playSound('pop');
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('open');
+    }
+
+    // 1. TRUCK ORDERS & VIP DIAMOND ORDERS
+    const ORDER_CUSTOMERS = [
+      { name: 'Bác Ba Trưởng Thôn', icon: '👨‍🌾' },
+      { name: 'Tiệm Bánh Cô Tư',   icon: '👩‍🍳' },
+      { name: 'Nhà Hàng Hoàng Gia', icon: '🤴' },
+      { name: 'Siêu Thị Xanh',      icon: '🏪' },
+      { name: 'Quý Bà Kim Cương',   icon: '👸' },
+      { name: 'Thương Gia Viễn Dương', icon: '🧔' }
+    ];
+
+    function generateSingleOrder(forceVip = false) {
+      const unlockedItems = ['wheat', 'corn', 'egg', 'bread'];
+      if (state.level >= 2) unlockedItems.push('carrot', 'sugarcane', 'milk', 'cornbread', 'cream', 'cheese', 'sugar');
+      if (state.level >= 3) unlockedItems.push('strawberry', 'wool', 'salmon', 'strawberry_cake', 'bbq_fish');
+      if (state.level >= 4) unlockedItems.push('grape', 'grape_gelato', 'lobster');
+      if (state.level >= 5) unlockedItems.push('pearl', 'silver_bar', 'gold_bar', 'gold_crown', 'diamond_ring');
+
+      const isVip = forceVip || Math.random() < 0.34;
+      const reqCount = isVip ? 2 : (Math.random() < 0.5 ? 1 : 2);
+      const reqs = {};
+      let baseGold = 0;
+
+      for (let i = 0; i < reqCount; i++) {
+        const pick = unlockedItems[Math.floor(Math.random() * unlockedItems.length)];
+        const qty = ITEMS[pick].basePrice > 100 ? 1 : (1 + Math.floor(Math.random() * 2));
+        reqs[pick] = (reqs[pick] || 0) + qty;
+        baseGold += ITEMS[pick].basePrice * qty;
+      }
+
+      const cust = ORDER_CUSTOMERS[Math.floor(Math.random() * ORDER_CUSTOMERS.length)];
+      return {
+        id: 'ord_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
+        customer: cust.name,
+        avatar: isVip ? '👑' : cust.icon,
+        isVip,
+        reqs,
+        gold: Math.round(baseGold * (isVip ? 1.65 : 1.35)) + 25,
+        xp: Math.round(baseGold * 0.55) + 18,
+        diamonds: isVip ? (2 + Math.floor(Math.random() * 3)) : 0
+      };
+    }
+
+    function generateOrdersIfNeeded() {
+      if (!state.orders) state.orders = [];
+      while (state.orders.length < 6) {
+        state.orders.push(generateSingleOrder(state.orders.length === 0));
+      }
+    }
+
+    function renderOrdersModal() {
+      generateOrdersIfNeeded();
+      const container = document.getElementById('ordersListContainer');
+      const badge = document.getElementById('truckStatusBadge');
+      if (badge) {
+        badge.textContent = truckAnim.active
+          ? '🚚 Xe tải đang chạy qua cầu gỗ giao hàng...'
+          : '🚚 Xe tải đang đậu sẵn sàng tại nông trại';
+      }
+
+      container.innerHTML = state.orders.map((ord, idx) => {
+        const canFulfill = Object.entries(ord.reqs).every(([k, q]) => (state.inventory[k] || 0) >= q);
+        const reqHtml = Object.entries(ord.reqs).map(([k, q]) => {
+          const have = state.inventory[k] || 0;
+          const ok = have >= q;
+          return `
+            <div class="parchment-inset px-2.5 py-1.5 flex items-center justify-between text-xs font-extrabold">
+              <span>${ITEMS[k].icon} ${ITEMS[k].name}</span>
+              <span class="${ok ? 'text-emerald-700 font-black' : 'text-rose-600 font-black'}">${have}/${q}</span>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="parchment-card p-3.5 flex flex-col justify-between relative ${ord.isVip ? 'border-amber-500 ring-2 ring-yellow-300' : ''}">
+            ${ord.isVip ? '<span class="absolute -top-2.5 right-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">👑 ĐƠN VIP KIM CƯƠNG</span>' : ''}
+            <div>
+              <div class="flex items-center gap-2 border-b border-amber-900/20 pb-2 mb-2">
+                <span class="text-2xl">${ord.avatar}</span>
+                <div>
+                  <div class="font-black text-sm leading-tight">${ord.customer}</div>
+                  <div class="text-[11px] text-amber-800 font-bold">Đơn hàng #${idx + 1}</div>
+                </div>
+              </div>
+              <div class="space-y-1.5 mb-3">${reqHtml}</div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between bg-amber-950/10 rounded-xl px-3 py-1.5 mb-2.5 text-xs font-black">
+                <span class="text-amber-900">Thưởng:</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-amber-700">🪙 +${ord.gold}</span>
+                  <span class="text-sky-700">⭐ +${ord.xp}</span>
+                  ${ord.diamonds > 0 ? `<span class="text-purple-700">💎 +${ord.diamonds}</span>` : ''}
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  onclick="fulfillOrder('${ord.id}')"
+                  ${(!canFulfill || truckAnim.active) ? 'disabled' : ''}
+                  class="btn-juice btn-green flex-1 py-2 rounded-xl font-black text-xs"
+                >
+                  🚚 Giao Xe Tải
+                </button>
+                <button
+                  onclick="replaceSingleOrder('${ord.id}')"
+                  class="btn-juice btn-red px-2.5 py-2 rounded-xl font-black text-xs"
+                  title="Đổi đơn khác"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function fulfillOrder(ordId) {
+      if (truckAnim.active) {
+        spawnToastBanner('🚚 Xe tải đang trên đường qua cầu gỗ, vui lòng đợi vài giây!');
+        return;
+      }
+      const idx = state.orders.findIndex(o => o.id === ordId);
+      if (idx === -1) return;
+      const ord = state.orders[idx];
+
+      for (const [k, q] of Object.entries(ord.reqs)) {
+        if ((state.inventory[k] || 0) < q) return;
+      }
+      for (const [k, q] of Object.entries(ord.reqs)) {
+        addItem(k, -q);
+      }
+
+      // Replace order with a new one
+      state.orders.splice(idx, 1, generateSingleOrder());
+      state.stats.totalOrders = (state.stats.totalOrders || 0) + 1;
+
+      // Launch Delivery Truck Animation across the Wooden Arch Bridge!
+      playSound('horn');
+      truckAnim.active = true;
+      truckAnim.phase = 'departing';
+      truckAnim.gx = 10.5;
+      truckAnim.gy = 17.6;
+      truckAnim.rewardGold = ord.gold;
+      truckAnim.rewardXp = ord.xp;
+      truckAnim.rewardDia = ord.diamonds || 0;
+
+      closeModal('ordersModal');
+      spawnToastBanner(`🚚 Xe tải đã xuất phát qua Cầu Gỗ! Sẽ chở +${ord.gold}🪙 về ngay!`);
+      updateHUD();
+      saveGame();
+    }
+
+    function replaceSingleOrder(ordId) {
+      const idx = state.orders.findIndex(o => o.id === ordId);
+      if (idx === -1) return;
+      playSound('pop');
+      state.orders.splice(idx, 1, generateSingleOrder());
+      renderOrdersModal();
+      saveGame();
+    }
+
+    function refreshAllOrdersWithDiamond() {
+      if (state.diamonds < 2) {
+        spawnToastBanner('💎 Không đủ 2 Kim Cương để làm mới toàn bộ đơn!');
+        return;
+      }
+      state.diamonds -= 2;
+      state.orders = [];
+      generateOrdersIfNeeded();
+      playSound('luckyDrop');
+      renderOrdersModal();
+      updateHUD();
+      saveGame();
+    }
+
+    // 2. BARN, SILO & UPGRADE MATERIALS MODAL
+    function renderBarnModal() {
+      const reqMatCount = state.barnLevel;
+      const canUpgrade =
+        (state.materials.bolt || 0) >= reqMatCount &&
+        (state.materials.plank || 0) >= reqMatCount &&
+        (state.materials.tape || 0) >= reqMatCount;
+
+      document.getElementById('barnUpgradePanel').innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="text-4xl">🏠</div>
+          <div>
+            <div class="font-black text-base text-amber-950">Kho Hiện Tại: Cấp ${state.barnLevel} (Sức chứa: ${getTotalStored()} / ${state.storageCap} ô)</div>
+            <div class="text-xs font-bold text-amber-800">Nâng cấp lên Cấp ${state.barnLevel + 1} giúp cộng thêm <span class="text-emerald-700 font-black">+25 sức chứa Kho</span> & +40 XP!</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="parchment-inset px-2.5 py-1 text-xs font-black">🔩 Đinh Ốc: ${state.materials.bolt || 0}/${reqMatCount}</span>
+          <span class="parchment-inset px-2.5 py-1 text-xs font-black">🪵 Ván Gỗ: ${state.materials.plank || 0}/${reqMatCount}</span>
+          <span class="parchment-inset px-2.5 py-1 text-xs font-black">🎗️ Băng Keo: ${state.materials.tape || 0}/${reqMatCount}</span>
+          <button
+            onclick="upgradeBarnCapacity()"
+            ${!canUpgrade ? 'disabled' : ''}
+            class="btn-juice btn-green px-4 py-2 rounded-xl font-black text-xs"
+          >
+            ⬆️ Nâng Cấp Kho (+25 Ô)
+          </button>
+        </div>
+      `;
+
+      document.getElementById('barnMaterialsRow').innerHTML = Object.values(MATERIALS).map(m => `
+        <div class="parchment-card p-2.5 flex flex-col items-center text-center">
+          <span class="text-2xl">${m.icon}</span>
+          <span class="font-black text-xs mt-1">${m.name}</span>
+          <span class="text-sm font-black text-amber-700">x${state.materials[m.id] || 0}</span>
+        </div>
+      `).join('');
+
+      const invEntries = Object.values(ITEMS);
+      document.getElementById('barnInventoryGrid').innerHTML = invEntries.map(item => {
+        const qty = state.inventory[item.id] || 0;
+        return `
+          <div class="parchment-card p-3 flex flex-col justify-between ${qty === 0 ? 'opacity-60' : ''}">
+            <div class="flex items-center justify-between">
+              <span class="text-2xl">${item.icon}</span>
+              <span class="parchment-inset px-2 py-0.5 text-xs font-black">x${qty}</span>
+            </div>
+            <div class="font-black text-xs mt-1.5 truncate">${item.name}</div>
+            <div class="text-[11px] text-amber-800 font-bold mb-2">Giá gốc: ${item.basePrice}🪙</div>
+            <button
+              onclick="sellItemFromBarn('${item.id}')"
+              ${qty <= 0 ? 'disabled' : ''}
+              class="btn-juice btn-gold w-full py-1 rounded-lg font-black text-[11px]"
+            >
+              Bán nhanh (+${item.basePrice}🪙)
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function upgradeBarnCapacity() {
+      const req = state.barnLevel;
+      if ((state.materials.bolt || 0) < req || (state.materials.plank || 0) < req || (state.materials.tape || 0) < req) return;
+      addMaterial('bolt', -req);
+      addMaterial('plank', -req);
+      addMaterial('tape', -req);
+      state.barnLevel++;
+      state.storageCap += 25;
+
+      playSound('levelup');
+      spawnFireworksAtGrid(state.barn.gx + 1, state.barn.gy + 1, 35);
+      addXp(45, state.barn.gx, state.barn.gy);
+      spawnToastBanner(`🏠 Nâng cấp Kho thành công lên Cấp ${state.barnLevel}! Sức chứa mới: ${state.storageCap} ô!`);
+      renderBarnModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function sellItemFromBarn(itemId) {
+      if ((state.inventory[itemId] || 0) <= 0) return;
+      const price = ITEMS[itemId].basePrice;
+      addItem(itemId, -1);
+      state.gold += price;
+      playSound('coin');
+      renderBarnModal();
+      updateHUD();
+      saveGame();
+    }
+
+    // 3. ROADSIDE SHOP MODAL (LV.2)
+    let selectedRoadsideItem = 'wheat';
+    let selectedRoadsidePriceMult = 1.4; // Default 140% profit!
+
+    function renderRoadsideModal() {
+      const body = document.getElementById('roadsideBody');
+      if (state.level < 2) {
+        body.innerHTML = `
+          <div class="parchment-card p-8 text-center">
+            <div class="text-5xl mb-3">🔒</div>
+            <h3 class="text-lg font-black">Quầy Bán Hàng Ven Đường mở khóa ở Cấp 2!</h3>
+            <p class="text-xs font-bold text-amber-800 mt-1">Hãy thu hoạch Lúa Mì, Ngô hoặc giao 1 chuyến Xe Tải để lên Cấp 2 ngay nhé!</p>
+          </div>
+        `;
+        return;
+      }
+
+      const availableItems = Object.keys(state.inventory).filter(k => (state.inventory[k] || 0) > 0 && ITEMS[k]);
+      if (availableItems.length > 0 && !availableItems.includes(selectedRoadsideItem)) {
+        selectedRoadsideItem = availableItems[0];
+      }
+
+      const itemObj = ITEMS[selectedRoadsideItem] || ITEMS.wheat;
+      const customPrice = Math.round(itemObj.basePrice * selectedRoadsidePriceMult);
+
+      const stallsHtml = state.roadsideStalls.map(st => {
+        if (st.sold) {
+          return `
+            <div class="parchment-card p-4 flex flex-col items-center justify-between border-2 border-emerald-500 bg-emerald-50">
+              <div class="text-xs font-black text-emerald-800">ĐÃ BÁN CHO KHÁCH!</div>
+              <div class="text-4xl my-2 animate-bounce">💰</div>
+              <div class="font-black text-sm text-amber-900">+${st.price} 🪙</div>
+              <button onclick="collectRoadsideStall(${st.slot})" class="btn-juice btn-green w-full py-2 rounded-xl font-black text-xs mt-2">
+                Thu Tiền Ngay!
+              </button>
+            </div>
+          `;
+        } else if (st.item) {
+          const it = ITEMS[st.item];
+          return `
+            <div class="parchment-card p-4 flex flex-col items-center justify-between">
+              <div class="text-xs font-black text-amber-800">Đang bày bán trên sạp</div>
+              <div class="text-4xl my-2">${it.icon}</div>
+              <div class="font-black text-xs">${it.name} x${st.qty}</div>
+              <div class="font-black text-sm text-amber-700 mt-1">Giá: ${st.price} 🪙</div>
+              <div class="text-[11px] text-emerald-700 font-bold mt-1">🚶 Khách đang đi ngang mua...</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="parchment-card p-4 flex flex-col items-center justify-between border-dashed">
+              <div class="text-xs font-bold text-amber-800">Ô Sạp #${st.slot + 1} (Trống)</div>
+              <div class="text-3xl my-2 opacity-40">🧺</div>
+              <button
+                onclick="putItemOnRoadsideStall(${st.slot})"
+                ${availableItems.length === 0 ? 'disabled' : ''}
+                class="btn-juice btn-gold w-full py-2 rounded-xl font-black text-xs mt-2"
+              >
+                + Treo Hàng Lên Sạp
+              </button>
+            </div>
+          `;
+        }
+      }).join('');
+
+      body.innerHTML = `
+        <div class="parchment-card p-4 mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex-1">
+            <div class="font-black text-sm mb-1">1️⃣ Chọn Nông Sản / Thành Phẩm Trong Kho Để Treo Bán:</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${availableItems.length === 0 ? '<span class="text-xs font-bold text-rose-700">Kho đang trống! Hãy thu hoạch cây trước nhé!</span>' : availableItems.map(k => `
+                <button
+                  onclick="selectedRoadsideItem='${k}';renderRoadsideModal();"
+                  class="btn-juice px-2.5 py-1 rounded-xl text-xs font-black border-2 ${selectedRoadsideItem === k ? 'bg-amber-400 border-amber-900 text-amber-950' : 'parchment-inset'}"
+                >
+                  ${ITEMS[k].icon} ${ITEMS[k].name} (x${state.inventory[k]})
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="w-full md:w-72 parchment-inset p-3">
+            <div class="flex items-center justify-between text-xs font-black mb-1">
+              <span>2️⃣ Tùy chỉnh giá bán:</span>
+              <span class="text-amber-900 text-sm">${customPrice} 🪙 (${Math.round(selectedRoadsidePriceMult * 100)}%)</span>
+            </div>
+            <input
+              type="range" min="1.0" max="1.8" step="0.1" value="${selectedRoadsidePriceMult}"
+              oninput="selectedRoadsidePriceMult=parseFloat(this.value);renderRoadsideModal();"
+              class="w-full accent-amber-600 cursor-pointer"
+            />
+            <div class="text-[11px] font-bold text-amber-800 mt-1">Giá gốc: ${itemObj.basePrice}🪙 • Khách NPC tự động mua!</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          ${stallsHtml}
+        </div>
+      `;
+    }
+
+    function putItemOnRoadsideStall(slotIdx) {
+      const st = state.roadsideStalls[slotIdx];
+      if (!st || st.item) return;
+      if ((state.inventory[selectedRoadsideItem] || 0) <= 0) return;
+
+      const it = ITEMS[selectedRoadsideItem];
+      const price = Math.round(it.basePrice * selectedRoadsidePriceMult);
+      addItem(selectedRoadsideItem, -1);
+
+      st.item = selectedRoadsideItem;
+      st.qty = 1;
+      st.price = price;
+      st.sold = false;
+
+      playSound('pop');
+      renderRoadsideModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function collectRoadsideStall(slotIdx) {
+      const st = state.roadsideStalls[slotIdx];
+      if (!st || !st.sold) return;
+      const earned = st.price;
+      st.item = null;
+      st.qty = 0;
+      st.price = 0;
+      st.sold = false;
+
+      state.gold += earned;
+      playSound('coin');
+      spawnCurvedFloatText(`+${earned} 🪙`, 14.5, 17.0, '#fde047', 'gold');
+      addXp(10, 14.5, 17.0);
+      renderRoadsideModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function collectAllRoadsideCoins() {
+      let total = 0;
+      for (const st of state.roadsideStalls) {
+        if (st.sold) {
+          total += st.price;
+          st.item = null;
+          st.qty = 0;
+          st.price = 0;
+          st.sold = false;
+        }
+      }
+      if (total > 0) {
+        state.gold += total;
+        playSound('coin');
+        spawnParticlesAtGrid(14.5, 17.0, '#fde047', 22);
+        spawnCurvedFloatText(`+${total} 🪙 Sạp Đường!`, 14.5, 17.0, '#fde047', 'gold');
+        addXp(15, 14.5, 17.0);
+        updateHUD();
+        saveGame();
+      }
+    }
+
+    // 4. ACHIEVEMENTS MODAL
+    function renderAchievementsModal() {
+      const list = document.getElementById('achievementsList');
+      list.innerHTML = ACHIEVEMENTS_DEF.map(ach => {
+        const cur = state.stats[ach.stat] || 0;
+        const done = cur >= ach.target;
+        const claimed = !!state.claimedAchievements[ach.id];
+        const pct = Math.min(100, Math.round((cur / ach.target) * 100));
+
+        return `
+          <div class="parchment-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex-1 w-full">
+              <div class="flex items-center justify-between">
+                <span class="font-black text-base">🏅 ${ach.title}</span>
+                <span class="text-xs font-black text-purple-700">Thưởng: +${ach.rewardDia} 💎 & +${ach.rewardXp} ⭐</span>
+              </div>
+              <div class="text-xs font-bold text-amber-800 mt-0.5">${ach.desc}</div>
+              <div class="w-full h-3 bg-amber-950/20 rounded-full overflow-hidden mt-2">
+                <div class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full" style="width:${pct}%"></div>
+              </div>
+              <div class="text-[11px] font-black text-amber-900 mt-1">Tiến độ: ${cur} / ${ach.target} (${pct}%)</div>
+            </div>
+            <div>
+              ${claimed ? `
+                <span class="parchment-inset px-4 py-2 text-xs font-black text-emerald-700">✅ Đã Nhận</span>
+              ` : `
+                <button
+                  onclick="claimAchievement('${ach.id}')"
+                  ${!done ? 'disabled' : ''}
+                  class="btn-juice btn-purple px-5 py-2.5 rounded-xl font-black text-xs whitespace-nowrap"
+                >
+                  🎁 Nhận +${ach.rewardDia} 💎
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function claimAchievement(achId) {
+      const ach = ACHIEVEMENTS_DEF.find(a => a.id === achId);
+      if (!ach || state.claimedAchievements[achId]) return;
+      if ((state.stats[ach.stat] || 0) < ach.target) return;
+
+      state.claimedAchievements[achId] = true;
+      state.diamonds += ach.rewardDia;
+      playSound('levelup');
+      addXp(ach.rewardXp, state.farmhouse.gx, state.farmhouse.gy);
+      spawnToastBanner(`🏆 Đạt Thành Tựu "${ach.title}"! Nhận +${ach.rewardDia} 💎!`);
+      renderAchievementsModal();
+      updateHUD();
+      saveGame();
+    }
+    /*************************************************************************
+     * 14. ANIMALS, FISHING TENSION MINI-GAME (LV.3), PETS & FARMHAND (LV.4)
+     *************************************************************************/
+    let fishingState = {
+      active: false,
+      useGoldenLure: false,
+      barPos: 50,     // 0..100
+      barVel: 1.8,
+      sweetMin: 36,
+      sweetMax: 68,
+      timerId: null
+    };
+
+    function renderAnimalsModal() {
+      const container = document.getElementById('animalsModalContent');
+      const now = Date.now();
+      const pondUnlocked = state.level >= 3 || state.pondRepaired;
+      const petsUnlocked = state.level >= 4 || state.petsUnlocked;
+      const farmhandActive = state.farmhandUntil > now;
+
+      // 1. Animal Pens Status
+      const pensHtml = state.animalPens.map((pen, idx) => {
+        const def = ANIMAL_PENS[pen.type];
+        const isReady = pen.status === 'ready' || (pen.status === 'producing' && (now - pen.startedAt >= pen.duration));
+        const remSec = pen.status === 'producing' ? Math.max(0, Math.ceil((pen.duration - (now - pen.startedAt)) / 1000)) : 0;
+
+        return `
+          <div class="parchment-card p-3.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">${def.icon}</span>
+              <div>
+                <div class="font-black text-sm">${def.name} #${idx + 1}</div>
+                <div class="text-xs font-bold text-amber-800">
+                  ${isReady ? `✨ Đã có 1 ${ITEMS[def.output].icon} ${ITEMS[def.output].name} sẵn sàng!` : (pen.status === 'hungry' ? `🥣 Đang đói (Cần 1 ${ITEMS[def.feedCrop].icon})` : `⏳ Đang tạo sản phẩm (${remSec}s)`)}
+                </div>
+              </div>
+            </div>
+            <button
+              onclick="interactAnimalPen(state.animalPens[${idx}]);renderAnimalsModal();"
+              class="btn-juice ${isReady ? 'btn-green' : 'btn-gold'} px-4 py-2 rounded-xl font-black text-xs"
+            >
+              ${isReady ? '🎁 Thu Hoạch' : (pen.status === 'hungry' ? '🥣 Cho Ăn Ngay' : `⏳ Còn ${remSec}s`)}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      // 2. Fishing Pond & Tension-Bar Mini-Game (Lv.3)
+      const fishingHtml = `
+        <div class="parchment-card p-4 border-2 border-sky-600">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-4xl">🎣</span>
+              <div>
+                <h3 class="font-black text-base text-sky-950">KHU HỒ CÂU CÁ & SĂN NGỌC TRAI HIẾM (MỞ LV.3)</h3>
+                <p class="text-xs font-bold text-sky-800">Căn thanh lực kéo vào vùng Xanh Lá để giật Cá Hồi 🐟, Tôm Hùm 🦞 và Ngọc Trai 🦪!</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="parchment-inset px-3 py-1 text-xs font-black">🪝 Mồi Câu Vàng: ${state.materials.lure || 0}</span>
+            </div>
+          </div>
+
+          ${!pondUnlocked ? `
+            <div class="parchment-inset p-4 text-center text-xs font-black text-amber-900">
+              🔒 Đạt Cấp 3 để mở khóa Bến Câu Cá & Ngọc Trai Hiếm (Hoặc bấm nút Sửa Bến Câu sớm bằng 150🪙):
+              <button onclick="repairPondEarly()" class="btn-juice btn-blue px-4 py-1.5 rounded-xl ml-2">🔨 Sửa Bến Câu (150🪙)</button>
+            </div>
+          ` : `
+            <div class="parchment-inset p-4">
+              <div class="flex items-center justify-between text-xs font-black mb-1.5">
+                <span>🎯 Thanh Căn Lực Giật Cá (Bấm GIẬT CẦN khi phao ở vùng Xanh Lá!):</span>
+                <span class="text-emerald-700">Thưởng: 🐟 Cá Hồi / 🦞 Tôm Hùm / 🦪 Ngọc Trai</span>
+              </div>
+              <div class="relative w-full h-7 bg-slate-800 rounded-full overflow-hidden border-2 border-sky-900 my-2">
+                <!-- Sweet Spot Green Zone -->
+                <div class="absolute top-0 bottom-0 bg-emerald-500/80 border-x-2 border-yellow-300" style="left:${fishingState.sweetMin}%; width:${fishingState.sweetMax - fishingState.sweetMin}%"></div>
+                <!-- Moving Hook Marker -->
+                <div id="fishingHookCursor" class="absolute top-0 bottom-0 w-3 bg-yellow-300 rounded-full shadow-lg flex items-center justify-center text-xs" style="left:${fishingState.barPos}%">🪝</div>
+              </div>
+
+              <div id="fishingStatusMsg" class="text-xs font-black text-center text-sky-900 my-2">
+                🌊 Chọn loại mồi để thả câu hoặc bấm GIẬT CẦN ngay khi phao đi vào ô màu xanh!
+              </div>
+
+              <div class="flex flex-wrap items-center justify-center gap-3 mt-2">
+                <button onclick="startOrCatchFish(false)" class="btn-juice btn-blue px-5 py-2.5 rounded-xl font-black text-xs">
+                  ${fishingState.active ? '💥 GIẬT CẦN NGAY!' : '🎣 Thả Câu Thường (Miễn Phí)'}
+                </button>
+                <button onclick="startOrCatchFish(true)" ${(state.materials.lure || 0) <= 0 && !fishingState.active ? 'disabled' : ''} class="btn-juice btn-gold px-5 py-2.5 rounded-xl font-black text-xs">
+                  ${fishingState.active ? '💥 GIẬT CẦN VÀNG!' : `🪝 Thả Mồi Câu Vàng (x2 Tỷ Lệ Ngọc Trai)`}
+                </button>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      // 3. Pets & Farmhand Helper (Lv.4)
+      const remHand = farmhandActive ? Math.ceil((state.farmhandUntil - now) / 1000) : 0;
+      const petsAndHelperHtml = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="parchment-card p-4">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="text-3xl">🐶🐱</span>
+              <div>
+                <div class="font-black text-sm">CHUỒNG CÚN ĐỐM & MÈO TAM THỂ (LV.4)</div>
+                <div class="text-xs font-bold text-amber-800">Cho ăn & vuốt ve nhận ngay +XP và 35% cơ hội rơi Vật Liệu Hiếm!</div>
+              </div>
+            </div>
+            ${!petsUnlocked ? `
+              <button onclick="unlockPetsEarly()" class="btn-juice btn-gold w-full py-2 rounded-xl font-black text-xs mt-2">
+                🔓 Mở Khóa Sớm Chuồng Thú Cưng (200🪙)
+              </button>
+            ` : `
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <button onclick="interactPet(state.pets[0])" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
+                  🐶 Cưng nựng Cún Milo
+                </button>
+                <button onclick="interactPet(state.pets[1])" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
+                  🐱 Cưng nựng Mèo Miu
+                </button>
+              </div>
+            `}
+          </div>
+
+          <div class="parchment-card p-4">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="text-3xl">👨‍🌾</span>
+              <div>
+                <div class="font-black text-sm">QUẢN GIA NÔNG TRẠI TOM (FARMHAND NPC)</div>
+                <div class="text-xs font-bold text-amber-800">Tự động đi gặt lúa, gieo hạt & thu gom trứng/sữa suốt 5 phút!</div>
+              </div>
+            </div>
+            <button
+              onclick="hireFarmhandTom()"
+              class="btn-juice ${farmhandActive ? 'btn-blue' : 'btn-gold'} w-full py-2.5 rounded-xl font-black text-xs mt-2"
+            >
+              ${farmhandActive ? `⚡ Đang Làm Việc (Còn ${remHand}s) — Gia Hạn +5 Phút (120🪙)` : '👨‍🌾 Thuê Quản Gia Tự Động 5 Phút (120🪙)'}
+            </button>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div class="space-y-2">${pensHtml}</div>
+        ${fishingHtml}
+        ${petsAndHelperHtml}
+      `;
+    }
+
+    function repairPondEarly() {
+      if (state.gold < 150) {
+        spawnToastBanner('🪙 Cần 150 Vàng để sửa Bến Câu Cá!');
+        return;
+      }
+      state.gold -= 150;
+      state.pondRepaired = true;
+      playSound('levelup');
+      spawnFireworksAtGrid(7, 14, 30);
+      renderAnimalsModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function unlockPetsEarly() {
+      if (state.gold < 200) {
+        spawnToastBanner('🪙 Cần 200 Vàng để mở Chuồng Thú Cưng!');
+        return;
+      }
+      state.gold -= 200;
+      state.petsUnlocked = true;
+      playSound('levelup');
+      spawnFireworksAtGrid(12, 12, 30);
+      renderAnimalsModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function startOrCatchFish(useGoldLure) {
+      if (!fishingState.active) {
+        if (useGoldLure) {
+          if ((state.materials.lure || 0) <= 0) {
+            spawnToastBanner('🪝 Bạn đã hết Mồi Câu Vàng!');
+            return;
+          }
+          addMaterial('lure', -1);
+        }
+        fishingState.active = true;
+        fishingState.useGoldenLure = useGoldLure;
+        fishingState.barPos = 10;
+        fishingState.barVel = 2.6;
+        playSound('splash');
+        renderAnimalsModal();
+
+        if (fishingState.timerId) clearInterval(fishingState.timerId);
+        fishingState.timerId = setInterval(() => {
+          if (!fishingState.active) {
+            clearInterval(fishingState.timerId);
+            return;
+          }
+          fishingState.barPos += fishingState.barVel;
+          if (fishingState.barPos >= 94 || fishingState.barPos <= 4) {
+            fishingState.barVel *= -1;
+          }
+          const cur = document.getElementById('fishingHookCursor');
+          if (cur) cur.style.left = fishingState.barPos + '%';
+        }, 28);
+      } else {
+        // Player clicked Pull! Check if inside sweet spot
+        clearInterval(fishingState.timerId);
+        fishingState.active = false;
+        const hitSweet = fishingState.barPos >= fishingState.sweetMin && fishingState.barPos <= fishingState.sweetMax;
+
+        let caughtId = 'salmon';
+        if (hitSweet) {
+          if (fishingState.useGoldenLure || Math.random() < 0.45) {
+            caughtId = Math.random() < 0.6 ? 'pearl' : 'lobster';
+          } else {
+            caughtId = Math.random() < 0.45 ? 'lobster' : 'salmon';
+          }
+        } else {
+          caughtId = 'salmon';
+        }
+
+        const item = ITEMS[caughtId];
+        addItem(caughtId, 1);
+        state.stats.totalFished = (state.stats.totalFished || 0) + 1;
+
+        playSound(hitSweet ? 'luckyDrop' : 'harvest');
+        spawnFireworksAtGrid(5.5, 14.2, hitSweet ? 32 : 16);
+        spawnCurvedFloatText(`🎣 +1 ${item.icon} ${item.name}!`, 5.5, 14.2, '#38bdf8', 'barn');
+        addXp(hitSweet ? 35 : 18, 5.5, 14.2);
+
+        renderAnimalsModal();
+        const msgEl = document.getElementById('fishingStatusMsg');
+        if (msgEl) {
+          msgEl.innerHTML = hitSweet
+            ? `🎉 CÚ GIẬT HOÀN HẢO! Câu trúng <span class="text-amber-700 font-black">1 ${item.icon} ${item.name}</span> (Trị giá ${item.basePrice}🪙)!`
+            : `🐟 Đã câu được <span class="text-sky-800 font-black">1 ${item.icon} ${item.name}</span>! Căn chuẩn vùng xanh để săn Ngọc Trai nhé!`;
+        }
+        updateHUD();
+        saveGame();
+      }
+    }
+
+    function hireFarmhandTom() {
+      if (state.gold < 120) {
+        spawnToastBanner('🪙 Cần 120 Vàng để thuê Quản Gia Tom làm việc 5 phút!');
+        return;
+      }
+      state.gold -= 120;
+      const base = Math.max(Date.now(), state.farmhandUntil || 0);
+      state.farmhandUntil = base + 5 * 60 * 1000;
+      playSound('levelup');
+      spawnToastBanner('👨‍🌾 Quản Gia Tom đã bắt đầu tự động thu hoạch, gieo hạt & chăm vật nuôi trong 5 phút!');
+      renderAnimalsModal();
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 15. FACTORIES & 3-STAR GOLDEN MASTERY SYSTEM (LV.1 -> LV.5)
+     *************************************************************************/
+    function renderFactoriesModal() {
+      updateFactoriesProgress();
+      const container = document.getElementById('factoriesModalContent');
+      const now = Date.now();
+
+      container.innerHTML = state.factories.map((fac, fIdx) => {
+        const def = FACTORIES[fac.type];
+        const stars = '⭐'.repeat(Math.min(3, Math.floor((fac.level + 1) / 2)));
+        const speedBonusPct = (fac.level - 1) * 12;
+        const valBonusPct = (fac.level - 1) * 15;
+        const maxSlots = 1 + fac.level; // Lv.1 = 2 slots -> Lv.5 = 6 slots!
+        fac.maxSlots = maxSlots;
+
+        const upgCostGold = fac.level * 220;
+        const canUpg = fac.level < 5 && state.gold >= upgCostGold;
+
+        // Queue slots display
+        let slotsHtml = '';
+        for (let s = 0; s < maxSlots; s++) {
+          const qItem = fac.queue[s];
+          if (qItem) {
+            const rem = s === 0 ? Math.max(1, Math.ceil((qItem.duration - (now - qItem.startedAt)) / 1000)) : Math.ceil(qItem.duration / 1000);
+            slotsHtml += `
+              <div class="parchment-inset px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-black border-amber-600">
+                <span>${ITEMS[qItem.output].icon}</span>
+                <span>${s === 0 ? rem + 's' : 'Chờ'}</span>
+              </div>
+            `;
+          } else {
+            slotsHtml += `
+              <div class="parchment-inset px-2.5 py-1.5 text-xs font-bold opacity-50">Ô #${s + 1} Trống</div>
+            `;
+          }
+        }
+
+        // Recipes buttons
+        const recipesHtml = def.recipes.map(rec => {
+          const outItem = ITEMS[rec.output];
+          const adjTime = Math.max(4, Math.round(rec.time * (1 - speedBonusPct / 100)));
+          const hasInputs = Object.entries(rec.inputs).every(([k, q]) => (state.inventory[k] || 0) >= q);
+          const ingStr = Object.entries(rec.inputs).map(([k, q]) => `${state.inventory[k] || 0}/${q}${ITEMS[k].icon}`).join(' + ');
+
+          return `
+            <div class="parchment-inset p-2.5 flex items-center justify-between gap-2">
+              <div>
+                <div class="font-black text-xs">${outItem.icon} ${outItem.name} (${adjTime}s)</div>
+                <div class="text-[11px] font-bold text-amber-900">Nguyên liệu: ${ingStr}</div>
+              </div>
+              <button
+                onclick="startFactoryRecipe(${fIdx}, '${rec.id}')"
+                ${(!hasInputs || fac.queue.length >= maxSlots) ? 'disabled' : ''}
+                class="btn-juice btn-green px-3 py-1.5 rounded-xl font-black text-xs shrink-0"
+              >
+                ⚙️ Chế Biến
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="parchment-card p-4 flex flex-col justify-between ${fac.level >= 3 ? 'ring-2 ring-yellow-400' : ''}">
+            <div>
+              <div class="flex items-center justify-between border-b border-amber-900/20 pb-2 mb-2.5">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-3xl">${def.icon}</span>
+                  <div>
+                    <div class="font-black text-base">${def.name} (Cấp ${fac.level}/5 ${stars})</div>
+                    <div class="text-[11px] font-bold text-emerald-800">
+                      ⚡ Tốc độ: -${speedBonusPct}% thời gian • 💰 Giá trị: +${valBonusPct}% • 📥 ${maxSlots} Ô Hàng Đợi
+                    </div>
+                  </div>
+                </div>
+                ${fac.readyOutputs.length > 0 ? `
+                  <button onclick="collectFactoryOutputs(state.factories[${fIdx}]);renderFactoriesModal();" class="btn-juice btn-gold px-3 py-1.5 rounded-xl font-black text-xs animate-bounce">
+                    🎁 Nhận (${fac.readyOutputs.length})
+                  </button>
+                ` : ''}
+              </div>
+
+              <div class="text-xs font-black mb-1">📥 Hàng Đợi Sản Xuất (${fac.queue.length}/${maxSlots} ô):</div>
+              <div class="flex flex-wrap gap-1.5 mb-3">${slotsHtml}</div>
+
+              <div class="space-y-2 mb-3">${recipesHtml}</div>
+            </div>
+
+            <div class="pt-2 border-t border-amber-900/20 flex items-center justify-between">
+              <span class="text-xs font-extrabold text-amber-900">
+                ${fac.level >= 5 ? '👑 Đã đạt Đỉnh Cao Sao Vàng Mastery (Mái Nhà Mạ Vàng)!' : `🌟 Nâng lên Cấp ${fac.level + 1}: Mở thêm ô + Mái Vàng 2.5D`}
+              </span>
+              ${fac.level < 5 ? `
+                <button
+                  onclick="upgradeFactoryMastery(${fIdx})"
+                  ${!canUpg ? 'disabled' : ''}
+                  class="btn-juice btn-gold px-3.5 py-1.5 rounded-xl font-black text-xs shrink-0"
+                >
+                  ⬆️ Nâng Cấp (${upgCostGold}🪙)
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function startFactoryRecipe(facIdx, recipeId) {
+      const fac = state.factories[facIdx];
+      if (!fac) return;
+      const def = FACTORIES[fac.type];
+      const rec = def.recipes.find(r => r.id === recipeId);
+      if (!rec) return;
+
+      const maxSlots = 1 + fac.level;
+      if (fac.queue.length >= maxSlots) {
+        spawnToastBanner('⚙️ Hàng đợi Nhà máy đã đầy! Hãy nâng cấp Sao Vàng Mastery để mở tới 6 ô!');
+        return;
+      }
+
+      for (const [k, q] of Object.entries(rec.inputs)) {
+        if ((state.inventory[k] || 0) < q) return;
+      }
+      for (const [k, q] of Object.entries(rec.inputs)) {
+        addItem(k, -q);
+      }
+
+      const speedBonusPct = (fac.level - 1) * 12;
+      const adjDuration = Math.max(4, Math.round(rec.time * (1 - speedBonusPct / 100))) * 1000;
+
+      fac.queue.push({
+        recipeId: rec.id,
+        output: rec.output,
+        startedAt: Date.now(),
+        duration: adjDuration
+      });
+      fac.bounce = 1.1;
+      playSound('pop');
+      renderFactoriesModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function upgradeFactoryMastery(facIdx) {
+      const fac = state.factories[facIdx];
+      if (!fac || fac.level >= 5) return;
+      const cost = fac.level * 220;
+      if (state.gold < cost) return;
+
+      state.gold -= cost;
+      fac.level++;
+      fac.maxSlots = 1 + fac.level;
+      fac.bounce = 1.35;
+
+      if (fac.level > (state.stats.maxFactoryLv || 1)) {
+        state.stats.maxFactoryLv = fac.level;
+      }
+
+      playSound('levelup');
+      spawnFireworksAtGrid(fac.gx + 1, fac.gy + 1, 38);
+      addXp(55, fac.gx, fac.gy);
+      spawnToastBanner(`⭐ ${FACTORIES[fac.type].name} đã nâng lên Cấp ${fac.level} Mastery! Mở ${fac.maxSlots} ô hàng đợi & Mái Nhà Mạ Vàng!`);
+      renderFactoriesModal();
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 16. BUILD SHOP, MINE EXCAVATION (LV.5) & LAND EXPANSION MODAL
+     *************************************************************************/
+    function findFreeGridSpot(size = 2) {
+      for (let gy = 8; gy < 25; gy++) {
+        for (let gx = 8; gx < 25; gx++) {
+          if (!isTilePlacementValid(gx, gy, size)) continue;
+          const overlapPlot = state.plots.some(p => p.gx >= gx && p.gx < gx + size && p.gy >= gy && p.gy < gy + size);
+          const overlapPen  = state.animalPens.some(a => Math.abs(a.gx - gx) < size && Math.abs(a.gy - gy) < size);
+          const overlapFac  = state.factories.some(f => Math.abs(f.gx - gx) < size && Math.abs(f.gy - gy) < size);
+          if (!overlapPlot && !overlapPen && !overlapFac) {
+            return { gx, gy };
+          }
+        }
+      }
+      return { gx: 15, gy: 19 };
+    }
+
+    function renderShopModal() {
+      const container = document.getElementById('shopModalContent');
+      const mineUnlocked = state.level >= 5 || state.mineUnlocked;
+
+      // 1. Northeast Mine & Smelter Excavation Panel (Lv.5)
+      const mineHtml = `
+        <div class="parchment-card p-4 border-2 border-amber-700">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span class="text-4xl">⛏️💎</span>
+              <div>
+                <h3 class="font-black text-base text-amber-950">VÁCH NÚI HẦM MỎ ĐÔNG BẮC (THE MINE - MỞ LV.5)</h3>
+                <p class="text-xs font-bold text-amber-800">Dùng Thuốc Nổ TNT 🧨 hoặc Cuốc Chim ⛏️ khai thác Quặng Bạc, Quặng Vàng, Bạch Kim & Kim Cương Tím!</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="parchment-inset px-2.5 py-1 text-xs font-black">🧨 TNT: ${state.materials.tnt || 0}</span>
+              <span class="parchment-inset px-2.5 py-1 text-xs font-black">⛏️ Cuốc: ${state.materials.pickaxe || 0}</span>
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            ${!mineUnlocked ? `
+              <button onclick="unlockMineEarly()" class="btn-juice btn-gold px-5 py-2.5 rounded-xl font-black text-xs">
+                🔓 Khai Phá Sớm Hầm Mỏ Đông Bắc (350🪙)
+              </button>
+            ` : `
+              <button onclick="excavateMine('tnt')" class="btn-juice btn-red px-5 py-2.5 rounded-xl font-black text-xs">
+                🧨 Nổ Mìn TNT Khai Thác Quặng & Kim Cương (1 🧨 hoặc 60🪙)
+              </button>
+              <button onclick="excavateMine('pickaxe')" class="btn-juice btn-gold px-5 py-2.5 rounded-xl font-black text-xs">
+                ⛏️ Đào Sâu Bằng Cuốc Chim Săn Bạch Kim (1 ⛏️ hoặc 60🪙)
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+
+      // 2. Buy Soil Plots, Animal Pens & Factories
+      const plotCost = 25 + state.plots.length * 8;
+      const buildingsHtml = `
+        <div>
+          <div class="text-sm font-black text-amber-100 mb-2">🏗️ MUA THÊM Ô ĐẤT, CHUỒNG TRẠI & NHÀ MÁY CHẾ BIẾN:</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- New Soil Plot -->
+            <div class="parchment-card p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="text-2xl">🟫 Ô Đất Trồng Cây Mới</div>
+                <div class="text-xs font-bold text-amber-800 mt-1">Hiện có: ${state.plots.length} ô đất hình thoi</div>
+              </div>
+              <button onclick="buyNewPlot(${plotCost})" class="btn-juice btn-green w-full py-2 rounded-xl font-black text-xs mt-3">
+                + Mua Ô Đất (${plotCost}🪙)
+              </button>
+            </div>
+
+            ${Object.values(ANIMAL_PENS).map(p => `
+              <div class="parchment-card p-3.5 flex flex-col justify-between">
+                <div>
+                  <div class="text-lg font-black">${p.icon} ${p.name} (Lv.${p.unlockLv})</div>
+                  <div class="text-xs font-bold text-amber-800 mt-1">Thu hoạch: ${ITEMS[p.output].icon} ${ITEMS[p.output].name} mỗi ${p.prodTime}s</div>
+                </div>
+                <button
+                  onclick="buyNewAnimalPen('${p.type}')"
+                  ${state.level < p.unlockLv ? 'disabled' : ''}
+                  class="btn-juice btn-gold w-full py-2 rounded-xl font-black text-xs mt-3"
+                >
+                  ${state.level < p.unlockLv ? `🔒 Mở ở Lv.${p.unlockLv}` : `+ Xây Chuồng (${p.cost}🪙)`}
+                </button>
+              </div>
+            `).join('')}
+
+            ${Object.values(FACTORIES).map(f => `
+              <div class="parchment-card p-3.5 flex flex-col justify-between">
+                <div>
+                  <div class="text-lg font-black">${f.icon} ${f.name} (Lv.${f.unlockLv})</div>
+                  <div class="text-xs font-bold text-amber-800 mt-1">Sản xuất: ${f.recipes.map(r => ITEMS[r.output].icon + ' ' + ITEMS[r.output].name).join(', ')}</div>
+                </div>
+                <button
+                  onclick="buyNewFactory('${f.type}')"
+                  ${state.level < f.unlockLv ? 'disabled' : ''}
+                  class="btn-juice btn-green w-full py-2 rounded-xl font-black text-xs mt-3"
+                >
+                  ${state.level < f.unlockLv ? `🔒 Mở ở Lv.${f.unlockLv}` : `+ Xây Nhà Máy (${f.cost}🪙)`}
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // 3. Land Expansion Sectors & Decorations
+      const landHtml = `
+        <div>
+          <div class="text-sm font-black text-amber-100 mb-2">🎆 MỞ RỘNG ĐẤT ĐAI RÌA BẢN ĐỒ & TRANG TRÍ:</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            ${LAND_SECTORS.map(sec => {
+              const unlocked = !!state.unlockedSectors[sec.id];
+              const matText = Object.entries(sec.reqMat).map(([k, q]) => `${q} ${MATERIALS[k].icon}`).join(' + ');
+              return `
+                <div class="parchment-card p-3.5 flex items-center justify-between gap-2">
+                  <div>
+                    <div class="font-black text-sm">🪧 ${sec.name} (Cấp ${sec.reqLv})</div>
+                    <div class="text-xs font-bold text-amber-800">Yêu cầu: ${sec.costGold}🪙 + ${matText}</div>
+                  </div>
+                  ${unlocked ? `
+                    <span class="parchment-inset px-3 py-1.5 text-xs font-black text-emerald-700">✅ Đã Giải Phóng</span>
+                  ` : `
+                    <button onclick="unlockLandSector('${sec.id}')" class="btn-juice btn-purple px-3.5 py-2 rounded-xl font-black text-xs shrink-0">
+                      🎆 Mở Rộng Ngay
+                    </button>
+                  `}
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            ${Object.values(DECORATIONS).map(d => `
+              <div class="parchment-card p-3 flex flex-col items-center text-center justify-between">
+                <span class="text-3xl">${d.icon}</span>
+                <div class="font-black text-xs mt-1">${d.name}</div>
+                <div class="text-[11px] text-emerald-700 font-bold">+${d.xp} ⭐ XP</div>
+                <button onclick="buyDecoration('${d.type}')" class="btn-juice btn-gold w-full py-1.5 rounded-xl font-black text-xs mt-2">
+                  Mua (${d.cost}🪙)
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = mineHtml + buildingsHtml + landHtml;
+    }
+
+    function unlockMineEarly() {
+      if (state.gold < 350) {
+        spawnToastBanner('🪙 Cần 350 Vàng để mở Hầm Mỏ Đông Bắc!');
+        return;
+      }
+      state.gold -= 350;
+      state.mineUnlocked = true;
+      playSound('levelup');
+      spawnFireworksAtGrid(25, 5, 40);
+      renderShopModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function excavateMine(toolType) {
+      if ((state.materials[toolType] || 0) > 0) {
+        addMaterial(toolType, -1);
+      } else if (state.gold >= 60) {
+        state.gold -= 60;
+      } else {
+        spawnToastBanner(`Cần 1 ${MATERIALS[toolType].name} hoặc 60🪙 để khai thác hầm mỏ!`);
+        return;
+      }
+
+      playSound('explosion');
+      spawnFireworksAtGrid(25, 5, 36);
+      state.stats.totalMined = (state.stats.totalMined || 0) + 1;
+
+      const roll = Math.random();
+      let oreId = 'silver_ore';
+      if (roll < 0.35) oreId = 'platinum_ore';
+      else if (roll < 0.72) oreId = 'gold_ore';
+
+      addItem(oreId, 2);
+      const bonusDia = Math.random() < 0.45 ? 2 : 0;
+      if (bonusDia > 0) state.diamonds += bonusDia;
+
+      spawnCurvedFloatText(`⛏️ +2 ${ITEMS[oreId].icon} ${ITEMS[oreId].name}!`, 25, 5, '#fde047', 'barn');
+      if (bonusDia > 0) {
+        spawnCurvedFloatText(`+${bonusDia} 💎 Kim Cương Mỏ!`, 25.5, 5.5, '#e879f9', 'diamond');
+      }
+      addXp(40, 25, 5);
+      spawnToastBanner(`⛏️ Khai thác Hầm Mỏ thu được 2 ${ITEMS[oreId].icon} ${ITEMS[oreId].name}${bonusDia ? ' và +2 💎 Kim Cương!' : '!'}`);
+      renderShopModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function buyNewPlot(cost) {
+      if (state.gold < cost) {
+        spawnToastBanner('🪙 Không đủ Vàng mua Ô Đất mới!');
+        return;
+      }
+      state.gold -= cost;
+      const spot = findFreeGridSpot(1);
+      state.plots.push({
+        id: 'plot_' + Date.now(),
+        gx: spot.gx,
+        gy: spot.gy,
+        crop: null,
+        plantedAt: 0,
+        growDuration: 4000,
+        bounce: 1.2
+      });
+      playSound('harvest');
+      addXp(10, spot.gx, spot.gy);
+      renderShopModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function buyNewAnimalPen(type) {
+      const def = ANIMAL_PENS[type];
+      if (!def || state.gold < def.cost) {
+        spawnToastBanner('🪙 Không đủ Vàng để xây chuồng trại này!');
+        return;
+      }
+      state.gold -= def.cost;
+      const spot = findFreeGridSpot(2);
+      state.animalPens.push({
+        id: 'pen_' + Date.now(),
+        type,
+        gx: spot.gx,
+        gy: spot.gy,
+        size: 2,
+        status: 'ready',
+        startedAt: Date.now() - def.prodTime * 1000,
+        duration: def.prodTime * 1000,
+        bounce: 1.3
+      });
+      playSound('levelup');
+      spawnFireworksAtGrid(spot.gx, spot.gy, 28);
+      addXp(25, spot.gx, spot.gy);
+      closeModal('shopModal');
+      updateHUD();
+      saveGame();
+    }
+
+    function buyNewFactory(type) {
+      const def = FACTORIES[type];
+      if (!def || state.gold < def.cost) {
+        spawnToastBanner('🪙 Không đủ Vàng để xây Nhà Máy này!');
+        return;
+      }
+      state.gold -= def.cost;
+      const spot = findFreeGridSpot(2);
+      state.factories.push({
+        id: 'fac_' + Date.now(),
+        type,
+        gx: spot.gx,
+        gy: spot.gy,
+        size: 2,
+        level: 1,
+        maxSlots: 2,
+        queue: [],
+        readyOutputs: [],
+        totalCrafted: 0,
+        bounce: 1.3
+      });
+      playSound('levelup');
+      spawnFireworksAtGrid(spot.gx, spot.gy, 35);
+      addXp(40, spot.gx, spot.gy);
+      closeModal('shopModal');
+      updateHUD();
+      saveGame();
+    }
+
+    function buyDecoration(type) {
+      const def = DECORATIONS[type];
+      if (!def || state.gold < def.cost) {
+        spawnToastBanner('🪙 Không đủ Vàng mua vật phẩm trang trí này!');
+        return;
+      }
+      state.gold -= def.cost;
+      const spot = findFreeGridSpot(1);
+      state.decorations.push({
+        id: 'dec_' + Date.now(),
+        type,
+        gx: spot.gx,
+        gy: spot.gy,
+        size: 1
+      });
+      playSound('harvest');
+      addXp(def.xp, spot.gx, spot.gy);
+      spawnToastBanner(`✨ Đã đặt ${def.icon} ${def.name} vào nông trại! Bấm nút Quy Hoạch 📐 để di chuyển tùy ý!`);
+      renderShopModal();
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 17. LUCKY SPIN WHEEL (VÒNG QUAY MAY MẮN HÀNG NGÀY)
+     *************************************************************************/
+    let wheelAngle = 0;
+    let isWheelSpinning = false;
+
+    function renderWheelModal() {
+      document.getElementById('wheelTicketCount').textContent = state.tickets || 0;
+      drawLuckyWheelCanvas(wheelAngle);
+    }
+
+    function drawLuckyWheelCanvas(angleRad) {
+      const wCanvas = document.getElementById('wheelCanvas');
+      if (!wCanvas) return;
+      const wCtx = wCanvas.getContext('2d');
+      const cx = wCanvas.width / 2;
+      const cy = wCanvas.height / 2;
+      const r = cx - 8;
+      const n = WHEEL_SLICES.length;
+      const arc = (Math.PI * 2) / n;
+
+      wCtx.clearRect(0, 0, wCanvas.width, wCanvas.height);
+
+      for (let i = 0; i < n; i++) {
+        const start = angleRad + i * arc;
+        const end = start + arc;
+        wCtx.beginPath();
+        wCtx.moveTo(cx, cy);
+        wCtx.arc(cx, cy, r, start, end);
+        wCtx.closePath();
+        wCtx.fillStyle = WHEEL_SLICES[i].color;
+        wCtx.fill();
+        wCtx.strokeStyle = '#fef08a';
+        wCtx.lineWidth = 2.5;
+        wCtx.stroke();
+
+        wCtx.save();
+        wCtx.translate(cx, cy);
+        wCtx.rotate(start + arc / 2);
+        wCtx.textAlign = 'right';
+        wCtx.fillStyle = '#ffffff';
+        wCtx.font = '900 12px "Segoe UI", sans-serif';
+        wCtx.fillText(`${WHEEL_SLICES[i].icon} ${WHEEL_SLICES[i].label}`, r - 14, 4);
+        wCtx.restore();
+      }
+
+      // Center Star Hub
+      wCtx.beginPath();
+      wCtx.arc(cx, cy, 26, 0, Math.PI * 2);
+      wCtx.fillStyle = '#fde047';
+      wCtx.fill();
+      wCtx.strokeStyle = '#78350f';
+      wCtx.lineWidth = 4;
+      wCtx.stroke();
+      wCtx.font = '22px sans-serif';
+      wCtx.textAlign = 'center';
+      wCtx.textBaseline = 'middle';
+      wCtx.fillText('⭐', cx, cy + 1);
+    }
+
+    function spinLuckyWheel(useDiamonds) {
+      if (isWheelSpinning) return;
+      if (useDiamonds) {
+        if (state.diamonds < 3) {
+          spawnToastBanner('💎 Cần 3 Kim Cương để quay thêm!');
+          return;
+        }
+        state.diamonds -= 3;
+      } else {
+        if ((state.tickets || 0) <= 0) {
+          spawnToastBanner('🎟️ Bạn đã hết Vé Vòng Quay! Hãy thu hoạch cây (15% rơi vé) hoặc quay bằng 3💎!');
+          return;
+        }
+        state.tickets--;
+      }
+
+      updateHUD();
+      document.getElementById('wheelTicketCount').textContent = state.tickets || 0;
+      isWheelSpinning = true;
+
+      const totalRotation = Math.PI * 8 + Math.random() * Math.PI * 4;
+      const startAngle = wheelAngle;
+      const duration = 2600;
+      const startTime = performance.now();
+      let lastTickSlice = -1;
+
+      function animateWheel(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const easeOut = 1 - Math.pow(1 - t, 3);
+        wheelAngle = startAngle + totalRotation * easeOut;
+        drawLuckyWheelCanvas(wheelAngle);
+
+        const sliceIdx = Math.floor(((wheelAngle % (Math.PI * 2)) / (Math.PI * 2)) * WHEEL_SLICES.length);
+        if (sliceIdx !== lastTickSlice) {
+          lastTickSlice = sliceIdx;
+          playSound('wheelTick');
+        }
+
+        if (t < 1) {
+          requestAnimationFrame(animateWheel);
+        } else {
+          isWheelSpinning = false;
+          // Compute winning slice at top pointer (-Math.PI / 2)
+          const n = WHEEL_SLICES.length;
+          const arc = (Math.PI * 2) / n;
+          const norm = ((Math.PI * 1.5 - (wheelAngle % (Math.PI * 2))) + Math.PI * 4) % (Math.PI * 2);
+          const winIdx = Math.floor(norm / arc) % n;
+          const prize = WHEEL_SLICES[winIdx];
+
+          awardWheelPrize(prize);
+        }
+      }
+      requestAnimationFrame(animateWheel);
+    }
+
+    function awardWheelPrize(prize) {
+      playSound('levelup');
+      if (prize.type === 'gold') {
+        state.gold += prize.amount;
+      } else if (prize.type === 'diamond') {
+        state.diamonds += prize.amount;
+      } else if (prize.type === 'barn_pack') {
+        addMaterial('bolt', 1);
+        addMaterial('plank', 1);
+        addMaterial('tape', 1);
+      } else if (prize.type === 'mine_pack') {
+        addMaterial('tnt', 2);
+        addMaterial('pickaxe', 2);
+      } else if (prize.type === 'crop_boost') {
+        for (const p of state.plots) {
+          if (p.crop) p.plantedAt = 0; // Ripen all crops immediately!
+        }
+      } else if (prize.type === 'lure') {
+        addMaterial('lure', prize.amount);
+      } else if (prize.type === 'xp') {
+        addXp(prize.amount, state.farmhouse.gx, state.farmhouse.gy);
+      }
+
+      document.getElementById('wheelResultText').textContent = `🎉 CHÚC MỪNG! Bạn quay trúng: ${prize.icon} ${prize.label}!`;
+      spawnFireworksAtGrid(state.farmhouse.gx + 1, state.farmhouse.gy + 1, 40);
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 18. SETTINGS, SANDBOX BOOST & MAIN 60FPS GAME ENGINE LOOP
+     *************************************************************************/
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('btnToggleSound');
+      if (btn) {
+        btn.textContent = soundEnabled ? 'ĐANG BẬT 🔊' : 'ĐANG TẮT 🔇';
+        btn.className = `btn-juice ${soundEnabled ? 'btn-green' : 'btn-red'} px-4 py-2 rounded-xl font-black text-xs`;
+      }
+      if (soundEnabled) playSound('pop');
+    }
+
+    function devGrantBoost() {
+      state.gold += 2000;
+      state.diamonds += 20;
+      state.tickets += 3;
+      Object.keys(MATERIALS).forEach(k => addMaterial(k, 3));
+      playSound('levelup');
+      spawnToastBanner('🎁 Đã cộng +2,000🪙, +20💎, +3🎟️ và +3 mỗi loại Vật liệu/Dụng cụ!');
+      updateHUD();
+      saveGame();
+    }
+
+    function devLevelUp() {
+      addXp(getXpNeeded(state.level), state.farmhouse.gx, state.farmhouse.gy);
+    }
+
+    function resetSaveData() {
+      if (!confirm('Bạn có chắc muốn xóa dữ liệu và khởi tạo lại Nông Trại từ Cấp 1?')) return;
+      localStorage.removeItem(SAVE_KEY);
+      state = createInitialState();
+      generateOrdersIfNeeded();
+      closeModal('settingsModal');
+      updateHUD();
+      spawnToastBanner('🌱 Đã tạo mới Nông Trại Thế Giới Mở 2.5D!');
+    }
+
+    // MAIN 60FPS ENGINE LOOP
+    let lastFrameTime = performance.now();
+
+    function gameLoop(now) {
+      const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+      const timeSec = now / 1000;
+
+      // 1. Weather Rain Effect & 2x Crop Growth Speed
+      if (isRaining) {
+        rainTimer -= dt;
+        if (rainTimer <= 0) {
+          isRaining = false;
+          updateEnvironmentHUD();
+        } else {
+          // Double crop growth speed by advancing plantedAt backward by dt*1000 ms!
+          for (const plot of state.plots) {
+            if (plot.crop && !isCropRipe(plot)) {
+              plot.plantedAt -= dt * 1000;
+            }
+          }
+          // Update rain particles
+          while (raindrops.length < 95) {
+            raindrops.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height });
+          }
+          for (const r of raindrops) {
+            r.x -= 360 * dt;
+            r.y += 780 * dt;
+            if (r.y > canvas.height) {
+              r.y = -20;
+              r.x = Math.random() * (canvas.width + 250);
+            }
+          }
+        }
+      } else if (Math.random() < 0.00025) {
+        // Spontaneous rain shower!
+        toggleRainEvent();
+      }
+
+      // 2. Automatic Day -> Sunset -> Night cycle every 90 seconds
+      timeCycleSeconds += dt;
+      if (timeCycleSeconds >= 90) {
+        timeCycleSeconds = 0;
+        if (timePhase === 'day') timePhase = 'sunset';
+        else if (timePhase === 'sunset') timePhase = 'night';
+        else timePhase = 'day';
+        updateEnvironmentHUD();
+      }
+
+      // 3. Mystery Red Chest Timer (Spawns every 60 seconds!)
+      if (!mysteryChest) {
+        chestTimer -= dt;
+        if (chestTimer <= 0) {
+          chestTimer = 60;
+          spawnMysteryChestNow();
+        }
+      }
+
+      // 4. Delivery Truck Animation across Wooden Bridge (gx: 10.5 -> 2.0 -> 10.5)
+      if (truckAnim.active) {
+        if (truckAnim.phase === 'departing') {
+          truckAnim.gx -= 4.2 * dt;
+          if (truckAnim.gx <= 2.2) {
+            truckAnim.phase = 'returning';
+            playSound('coin');
+          }
+        } else if (truckAnim.phase === 'returning') {
+          truckAnim.gx += 4.2 * dt;
+          if (truckAnim.gx >= 10.5) {
+            truckAnim.gx = 10.5;
+            truckAnim.active = false;
+            truckAnim.phase = 'idle';
+
+            // Deliver Gold, XP & VIP Diamonds!
+            state.gold += truckAnim.rewardGold;
+            if (truckAnim.rewardDia > 0) state.diamonds += truckAnim.rewardDia;
+            playSound('levelup');
+            spawnFireworksAtGrid(10.5, 17.5, 32);
+            spawnCurvedFloatText(`🚚 +${truckAnim.rewardGold} 🪙`, 10.5, 17.5, '#fde047', 'gold');
+            if (truckAnim.rewardDia > 0) {
+              spawnCurvedFloatText(`+${truckAnim.rewardDia} 💎 VIP!`, 10.0, 17.0, '#e879f9', 'diamond');
+            }
+            addXp(truckAnim.rewardXp, 10.5, 17.5);
+            updateHUD();
+            saveGame();
+          }
+        }
+      }
+
+      // 5. Update Factories, Pedestrians & Farmhand AI
+      updateFactoriesProgress();
+      updatePedestriansAndFarmhand(dt);
+
+      // 6. Render 2.5D Isometric Open World
+      renderWorld(timeSec);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Initialize Game on Load
+    loadGame();
+    resetCamera();
+    updateEnvironmentHUD();
+    updateHUD();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
