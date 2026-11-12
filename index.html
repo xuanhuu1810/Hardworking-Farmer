@@ -285,6 +285,9 @@
           <button onclick="toggleRainEvent()" class="btn-juice btn-blue px-2 py-1 rounded-lg text-[11px] font-black ml-1" title="Gọi mưa rào x2 tốc độ lớn">
             🌧️ Gọi Mưa
           </button>
+          <button onclick="toggleHarvestFestival()" class="btn-juice btn-purple px-2 py-1 rounded-lg text-[11px] font-black" title="Bật Lễ Hội Mùa Vụ tăng 25% tỷ lệ Cây Khổng Lồ Ánh Kim x5!">
+            🎊 Lễ Hội Đột Biến
+          </button>
           <button onclick="cycleTimeOfDay()" class="btn-juice btn-gold px-2 py-1 rounded-lg text-[11px] font-black" title="Đổi Ngày / Hoàng Hôn / Đêm">
             🌗 Đổi Giờ
           </button>
@@ -344,6 +347,18 @@
           <span class="text-3xl">🏪</span>
           <span class="dock-orb-label">Sạp Ven Đường</span>
           <span id="badgeRoadside" class="dock-badge hidden">!</span>
+        </div>
+
+        <div onclick="openModal('newspaperModal')" class="dock-orb" title="Hòm Thư & Báo Nông Thôn Daily Dirt (Săn hàng hiếm giảm giá mỗi 30s)">
+          <span class="text-3xl">📰</span>
+          <span class="dock-orb-label">Báo Hàng Xóm</span>
+          <span id="badgeNewspaper" class="dock-badge">6</span>
+        </div>
+
+        <div onclick="openModal('steamshipModal')" class="dock-orb" title="Bến Tàu Hơi Nước Phía Nam & Đổi Voucher Thú Cưng/Tượng Vàng">
+          <span class="text-3xl">🚢</span>
+          <span class="dock-orb-label">Bến Tàu VIP</span>
+          <span id="badgeSteamship" class="dock-badge">0/4</span>
         </div>
 
         <div onclick="openModal('achievementsModal')" class="dock-orb" title="Sổ Thành Tựu - Nhận Kim Cương">
@@ -417,7 +432,8 @@
       <div class="hidden md:flex items-center gap-1.5 hud-interactive wood-bar px-3 py-1.5">
         <span class="text-xs font-black text-amber-200 mr-1">🗺️ Đi tới:</span>
         <button onclick="panToZone('center')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🏡 Trang Trại</button>
-        <button onclick="panToZone('shop')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🏪 Sạp Đường</button>
+        <button onclick="panToZone('shop')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🏪 Sạp & Báo</button>
+        <button onclick="panToZone('dock')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🚢 Bến Tàu</button>
         <button onclick="panToZone('pond')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">🎣 Hồ Câu</button>
         <button onclick="panToZone('mine')" class="btn-juice parchment-card px-2 py-1 text-xs font-extrabold">⛏️ Hầm Mỏ</button>
       </div>
@@ -706,6 +722,66 @@
       </div>
     </div>
   </div>
+
+  <!-- 10. STEAMSHIP DOCK & COLORED VOUCHER EXCHANGE MODAL (EXPANSION 1) -->
+  <div id="steamshipModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('steamshipModal')">
+    <div class="wood-modal w-full max-w-5xl max-h-[90vh] flex flex-col p-5">
+      <div class="flex flex-wrap items-center justify-between border-b-2 border-amber-900/40 pb-3 mb-4 gap-2">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl">🚢</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-amber-100 drop-shadow">BẾN TÀU HƠI NƯỚC & THƯƠNG NHÂN VOUCHER VIP</h2>
+            <p class="text-xs text-amber-200 font-bold">Đóng đủ 4 thùng hàng nông sản trước khi tàu rời bến để nhận Phiếu Voucher Màu (Xanh 🎫, Đỏ 🎟️, Vàng 🏷️)!</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div id="voucherWalletBar" class="parchment-card px-3 py-1.5 flex items-center gap-3 text-xs font-black">
+            <span>🎫 Xanh: <b id="vCountBlue" class="text-sky-700">0</b></span>
+            <span>🎟️ Đỏ: <b id="vCountRed" class="text-rose-600">0</b></span>
+            <span>🏷️ Vàng: <b id="vCountGold" class="text-amber-600">0</b></span>
+          </div>
+          <button onclick="closeModal('steamshipModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+        </div>
+      </div>
+
+      <div id="steamshipModalContent" class="space-y-4 overflow-y-auto pr-1 flex-1">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. DAILY DIRT NEWSPAPER MODAL (EXPANSION 3) -->
+  <div id="newspaperModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('newspaperModal')">
+    <div class="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl border-4 border-stone-700" style="background: linear-gradient(180deg, #f7f1e1 0%, #eadcc1 100%); color: #292524;">
+      <!-- Vintage Newspaper Masthead -->
+      <div class="border-b-4 border-double border-stone-800 px-6 py-4 bg-stone-900/5 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div class="text-[11px] font-black uppercase tracking-widest text-stone-600">ẤN PHẨM ĐẶC BIỆT THUNG LŨNG HAY DAY • LÀM MỚI MỖI 30 GIÂY</div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-stone-900" style="font-family: Georgia, 'Times New Roman', serif;">📰 THE DAILY DIRT — NHẬT BÁO NÔNG THÔN</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="bg-amber-900 text-amber-100 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5">
+            <span>⏱️ Số báo mới sau:</span>
+            <span id="newspaperTimerText" class="text-yellow-300 font-mono text-sm">30s</span>
+          </div>
+          <button onclick="refreshNewspaperDeals(true)" class="btn-juice btn-purple px-3 py-1.5 rounded-xl text-xs font-black">
+            🔄 Tìm Báo Mới (1 💎)
+          </button>
+          <button onclick="closeModal('newspaperModal')" class="btn-juice btn-red w-10 h-10 rounded-xl font-black text-lg">✖</button>
+        </div>
+      </div>
+
+      <!-- 6 Classified Ads Grid -->
+      <div id="newspaperAdsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 p-5 overflow-y-auto flex-1">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <div class="px-6 py-3 bg-stone-900/10 border-t-2 border-stone-400 flex items-center justify-between text-xs font-bold text-stone-700">
+        <span>💡 Mẹo: Các nông trại hàng xóm thường xuyên xả kho Đinh Ốc, Ván Gỗ, Thuốc Nổ TNT & Bánh Kem giảm giá tới 45%!</span>
+        <span class="font-black text-emerald-800">📬 Hòm thư đặt ngay cổng chính nông trại</span>
+      </div>
+    </div>
+  </div>
   <script>
     /*************************************************************************
      * 1. CORE CONFIGURATION, MULTI-TIER PRODUCTION DATA & WORLD DEFINITIONS
@@ -881,20 +957,42 @@
       }
     };
 
-    // Decorations Catalog (For Land Expansion & Customization)
+    // Decorations Catalog (For Land Expansion & Customization + Golden Voucher Statues)
     const DECORATIONS = {
-      stone_path:   { type: 'stone_path',   name: 'Đường Lát Đá Cuội', icon: '🪨', cost: 20,  size: 1, xp: 2 },
-      lantern_post: { type: 'lantern_post', name: 'Đèn Đường Cổ Điển', icon: '🏮', cost: 65,  size: 1, xp: 8 },
-      flower_bed:   { type: 'flower_bed',   name: 'Bồn Hoa Hướng Dương', icon: '🌻', cost: 50, size: 1, xp: 6 },
-      fountain:     { type: 'fountain',     name: 'Đài Phun Nước Đá',   icon: '⛲', cost: 280, size: 2, xp: 30 },
-      gold_statue:  { type: 'gold_statue',  name: 'Tượng Gà Vàng Ròng', icon: '🏆', cost: 650, size: 1, xp: 75 }
+      stone_path:         { type: 'stone_path',         name: 'Đường Lát Đá Cuội',       icon: '🪨', cost: 20,  size: 1, xp: 2 },
+      lantern_post:       { type: 'lantern_post',       name: 'Đèn Đường Cổ Điển',       icon: '🏮', cost: 65,  size: 1, xp: 8 },
+      flower_bed:         { type: 'flower_bed',         name: 'Bồn Hoa Hướng Dương',     icon: '🌻', cost: 50,  size: 1, xp: 6 },
+      fountain:           { type: 'fountain',           name: 'Đài Phun Nước Đá',         icon: '⛲', cost: 280, size: 2, xp: 30 },
+      gold_statue:        { type: 'gold_statue',        name: 'Tượng Gà Vàng Ròng',       icon: '🏆', cost: 650, size: 1, xp: 75 },
+      dragon_fountain:    { type: 'dragon_fountain',    name: 'Đài Phun Rồng Vàng VIP',   icon: '🐉', cost: 0,   size: 2, xp: 150, voucherOnly: true },
+      golden_ship_statue: { type: 'golden_ship_statue', name: 'Tượng Tàu Hơi Nước Vàng',  icon: '🚢', cost: 0,   size: 2, xp: 180, voucherOnly: true },
+      golden_windmill:    { type: 'golden_windmill',    name: 'Cối Xay Gió Hoàng Kim',    icon: '🏯', cost: 0,   size: 2, xp: 200, voucherOnly: true }
     };
+
+    // Voucher Exchange Shop Catalog (Expansion 1: Pets & Golden Statues)
+    const VOUCHER_SHOP = [
+      { id: 'v_peacock', kind: 'pet', petType: 'peacock', name: 'Công Ngũ Sắc Hoàng Gia', icon: '🦚', desc: 'Thú cưng quý hiếm đi dạo khắp nông trại, mỗi lần vuốt ve tặng +35 XP & cơ hội rơi Kim Cương!', req: { blue: 2, red: 1, gold: 0 } },
+      { id: 'v_unicorn', kind: 'pet', petType: 'unicorn', name: 'Ngựa Pony Ánh Kim',       icon: '🦄', desc: 'Giống thú cưng huyền thoại chạy tung tăng, ban đêm phát hào quang lấp lánh!', req: { blue: 1, red: 2, gold: 1 } },
+      { id: 'v_fox',     kind: 'pet', petType: 'fox',     name: 'Cáo Tuyết Thần Thoại',    icon: '🦊', desc: 'Thú cưng săn kho báu, tăng may mắn rơi Đinh ốc/Ván gỗ khi vuốt ve!', req: { blue: 2, red: 0, gold: 1 } },
+      { id: 'v_dragon',  kind: 'deco', decoType: 'dragon_fountain',    name: 'Đài Phun Rồng Vàng 2.5D', icon: '🐉', desc: 'Tuyệt tác kiến trúc mạ vàng đặt trên bản đồ (+150 XP ngay khi đổi)!', req: { blue: 1, red: 2, gold: 1 } },
+      { id: 'v_ship',    kind: 'deco', decoType: 'golden_ship_statue', name: 'Tượng Tàu Hơi Nước Vàng',  icon: '🚢', desc: 'Biểu tượng Đại Thương Nhân đường thủy mạ vàng ròng (+180 XP)!', req: { blue: 2, red: 1, gold: 2 } }
+    ];
+
+    // Neighbor NPC Farms for "The Daily Dirt" Newspaper (Expansion 3)
+    const NEIGHBOR_FARMS = [
+      { farm: 'Nông Trại Chú Tám', avatar: '👨‍🌾',quote: 'Xả kho vật liệu nâng cấp giá rẻ!' },
+      { farm: 'Đồi Dâu Cô Ba',     avatar: '👩‍🌾', quote: 'Bánh ngọt & nông sản tươi mới ra lò!' },
+      { farm: 'Hầm Mỏ Ông Sáu',    avatar: '🧔', quote: 'Dư thuốc nổ TNT và cuốc chim cần nhượng lại!' },
+      { farm: 'Bến Câu Bé Mây',    avatar: '👧', quote: 'Mới câu được Ngọc Trai & Tôm Hùm giảm giá sốc!' },
+      { farm: 'Xưởng Bánh Bà Bảy', avatar: '👵', quote: 'Hàng hiếm số lượng có hạn, ai nhanh tay người đó được!' },
+      { farm: 'Thung Lũng Hoàng Gia', avatar: '🤴', quote: 'Thanh lý trang sức & thỏi vàng giá hữu nghị!' }
+    ];
 
     // Expandable Land Sectors around the periphery
     const LAND_SECTORS = [
       { id: 'sec_east',  name: 'Đồi Phía Đông (Mở rộng Cánh Đồng)', gx: 22, gy: 12, w: 6, h: 7, reqLv: 2, costGold: 250, reqMat: { plank: 1 } },
-      { id: 'sec_south', name: 'Thung Lũng Nam (Khu Công Nghiệp)',  gx: 11, gy: 23, w: 8, h: 6, reqLv: 3, costGold: 450, reqMat: { bolt: 1, plank: 1 } },
-      { id: 'sec_west',  name: 'Vườn Ven Hồ Tây (Biệt Thự Hoa)',    gx: 3,  gy: 19, w: 7, h: 7, reqLv: 4, costGold: 750, reqMat: { tape: 2, plank: 1 } },
+      { id: 'sec_south', name: 'Thung Lũng Nam (Cạnh Bến Tàu)',     gx: 19, gy: 20, w: 7, h: 5, reqLv: 3, costGold: 450, reqMat: { bolt: 1, plank: 1 } },
+      { id: 'sec_west',  name: 'Vườn Ven Hồ Tây (Biệt Thự Hoa)',    gx: 3,  gy: 19, w: 7, h: 6, reqLv: 4, costGold: 750, reqMat: { tape: 2, plank: 1 } },
       { id: 'sec_north', name: 'Cao Nguyên Bắc (Cạnh Hầm Mỏ)',      gx: 21, gy: 4,  w: 7, h: 6, reqLv: 5, costGold: 1100, reqMat: { bolt: 2, tape: 2 } }
     ];
 
@@ -1070,6 +1168,7 @@
             crop: gx <= 14 ? 'wheat' : null,
             plantedAt: gx <= 14 ? Date.now() - 4000 : 0, // Ready to harvest right away for instant fun!
             growDuration: 4000,
+            isMutant: (gx === 13 && gy === 14), // 1 Giant Golden Mutant Crop ready right away!
             bounce: 0
           });
         }
@@ -1185,6 +1284,27 @@
         // Mine & Cliff (Lv.5)
         mineUnlocked: false,
 
+        // Colored Vouchers (Expansion 1: Blue, Red, Gold)
+        vouchers: {
+          blue: 2,
+          red: 1,
+          gold: 1
+        },
+
+        // Steamship Dock at Southern River (Expansion 1)
+        steamship: {
+          status: 'docked', // 'docked' | 'sailing'
+          timer: 120,       // 120s docked or sailing countdown
+          shipX: 15.0,
+          crates: []
+        },
+
+        // Daily Dirt Newspaper Ads (Expansion 3)
+        newspaperAds: [],
+
+        // Harvest Festival Mutant Crop Boost (Expansion 2)
+        harvestFestivalUntil: 0,
+
         // Truck Delivery Orders
         orders: [],
 
@@ -1268,13 +1388,18 @@
           state = Object.assign(createInitialState(), parsed);
           state.inventory = Object.assign(createInitialState().inventory, parsed.inventory || {});
           state.materials = Object.assign(createInitialState().materials, parsed.materials || {});
-          state.stats = Object.assign(createInitialState().stats, parsed.stats || {});
+          state.vouchers  = Object.assign(createInitialState().vouchers, parsed.vouchers || {});
+          state.stats     = Object.assign(createInitialState().stats, parsed.stats || {});
           if (!state.orders || state.orders.length === 0) generateOrdersIfNeeded();
+          if (!state.steamship || !state.steamship.crates || state.steamship.crates.length === 0) generateSteamshipCrates();
+          if (!state.newspaperAds || state.newspaperAds.length === 0) generateNewspaperAds();
           return;
         }
       } catch (e) {}
       state = createInitialState();
       generateOrdersIfNeeded();
+      generateSteamshipCrates();
+      generateNewspaperAds();
     }
     /*************************************************************************
      * 4. 2.5D ISOMETRIC CAMERA, COORDINATE MATH & VISUAL FX ("GAME JUICE")
@@ -1312,11 +1437,12 @@
     let rainTimer = 0;
     let raindrops = [];
 
-    // Particles, Floating Curved Texts & Mystery Chest
+    // Particles, Floating Curved Texts, Mystery Chest & Newspaper Timer
     let particles = [];
     let floatTexts = [];
     let mysteryChest = null; // { gx, gy, spawnedAt, pulse }
     let chestTimer = 42;     // Spawns first mystery chest soon, then every 60s
+    let newspaperTimer = 30; // Refreshes Daily Dirt Newspaper every 30s
 
     // Delivery Truck Animation State
     const truckAnim = {
@@ -1405,7 +1531,8 @@
     function panToZone(zone) {
       playSound('pop');
       let targetGx = 14, targetGy = 13;
-      if (zone === 'shop') { targetGx = 14; targetGy = 18; }
+      if (zone === 'shop') { targetGx = 13; targetGy = 17; }
+      else if (zone === 'dock') { targetGx = 15; targetGy = 27; }
       else if (zone === 'pond') { targetGx = 5; targetGy = 14; }
       else if (zone === 'mine') { targetGx = 25; targetGy = 5; }
       const isoX = (targetGx - targetGy) * (TILE_W / 2);
@@ -1628,6 +1755,20 @@
     /*************************************************************************
      * 7. FARMING, ANIMALS, FACTORIES, PETS & LAND EXPANSION LOGIC
      *************************************************************************/
+    function toggleHarvestFestival() {
+      const now = Date.now();
+      if (state.harvestFestivalUntil > now) {
+        state.harvestFestivalUntil = 0;
+        spawnToastBanner('🌾 Đã kết thúc sớm Lễ Hội Mùa Vụ.');
+      } else {
+        state.harvestFestivalUntil = now + 90 * 1000;
+        playSound('levelup');
+        spawnFireworksAtGrid(state.farmhouse.gx + 1, state.farmhouse.gy + 1, 45);
+        spawnToastBanner('🎊 LỄ HỘI MÙA VỤ BÙNG NỔ (90s)! Tỷ lệ mọc Cây Khổng Lồ Ánh Kim (x5 sản lượng & 100% rơi đồ hiếm) tăng lên 25%!');
+      }
+      updateEnvironmentHUD();
+    }
+
     function isCropRipe(plot) {
       if (!plot.crop) return false;
       return (Date.now() - plot.plantedAt) >= plot.growDuration;
@@ -1650,11 +1791,22 @@
       plot.crop = cropId;
       plot.plantedAt = Date.now();
       plot.growDuration = cDef.growTime * 1000;
-      plot.bounce = 1.0;
 
-      playSound('pop');
-      spawnParticlesAtGrid(plot.gx, plot.gy, '#84cc16', 8);
-      spawnCurvedFloatText(`-${cDef.seedCost}🪙 ${cDef.icon}`, plot.gx, plot.gy, '#fef08a', 'none');
+      // EXPANSION 2: 10% Golden/Giant Mutant Crop Chance (25% during Harvest Festival!)
+      const festActive = (state.harvestFestivalUntil || 0) > Date.now();
+      const mutantChance = festActive ? 0.25 : 0.10;
+      plot.isMutant = Math.random() < mutantChance;
+      plot.bounce = plot.isMutant ? 1.45 : 1.0;
+
+      if (plot.isMutant) {
+        playSound('luckyDrop');
+        spawnFireworksAtGrid(plot.gx, plot.gy, 22);
+        spawnCurvedFloatText(`🌟 ĐỘT BIẾN ÁNH KIM x5!`, plot.gx, plot.gy, '#fde047', 'none');
+      } else {
+        playSound('pop');
+        spawnParticlesAtGrid(plot.gx, plot.gy, '#84cc16', 8);
+        spawnCurvedFloatText(`-${cDef.seedCost}🪙 ${cDef.icon}`, plot.gx, plot.gy, '#fef08a', 'none');
+      }
       updateHUD();
       saveGame();
       return true;
@@ -1669,20 +1821,43 @@
       }
 
       const cDef = CROPS[plot.crop];
+      const wasMutant = !!plot.isMutant;
       plot.crop = null;
       plot.plantedAt = 0;
-      plot.bounce = 1.2;
+      plot.isMutant = false;
+      plot.bounce = wasMutant ? 1.5 : 1.2;
 
-      addItem(cDef.id, 2); // Harvest yields 2 crops!
-      state.stats.totalHarvested = (state.stats.totalHarvested || 0) + 1;
+      if (wasMutant) {
+        // EXPANSION 2: Giant Golden Crop yields 5x output (10 items!) + Guaranteed Barn Material or Diamonds!
+        const yieldQty = 10;
+        addItem(cDef.id, yieldQty);
+        state.stats.totalHarvested = (state.stats.totalHarvested || 0) + 5;
+        playSound('levelup');
+        spawnFireworksAtGrid(plot.gx, plot.gy, 38);
+        spawnCurvedFloatText(`🌟 SIÊU MÙA VỤ +${yieldQty} ${cDef.icon}!`, plot.gx, plot.gy, '#fde047', 'barn');
+        addXp(cDef.xp * 3, plot.gx, plot.gy);
 
-      playSound('harvest');
-      spawnParticlesAtGrid(plot.gx, plot.gy, cDef.colorTop, 16);
-      spawnCurvedFloatText(`+2 ${cDef.icon} ${cDef.name}`, plot.gx, plot.gy, '#fde047', 'barn');
-      addXp(cDef.xp, plot.gx, plot.gy);
+        // 100% Guaranteed Rare Barn Upgrade Material OR Purple Diamonds!
+        if (Math.random() < 0.65) {
+          const matPool = ['bolt', 'plank', 'tape'];
+          const pickMat = matPool[Math.floor(Math.random() * matPool.length)];
+          addMaterial(pickMat, 1);
+          spawnCurvedFloatText(`🎁 CHẮC CHẮN RƠI +1 ${MATERIALS[pickMat].icon} ${MATERIALS[pickMat].name}!`, plot.gx, plot.gy - 0.3, '#4ade80', 'barn');
+        } else {
+          state.diamonds += 3;
+          spawnCurvedFloatText(`💎 ĐỘT BIẾN +3 KIM CƯƠNG!`, plot.gx, plot.gy - 0.3, '#e879f9', 'diamond');
+        }
+      } else {
+        addItem(cDef.id, 2); // Normal harvest yields 2 crops
+        state.stats.totalHarvested = (state.stats.totalHarvested || 0) + 1;
+        playSound('harvest');
+        spawnParticlesAtGrid(plot.gx, plot.gy, cDef.colorTop, 16);
+        spawnCurvedFloatText(`+2 ${cDef.icon} ${cDef.name}`, plot.gx, plot.gy, '#fde047', 'barn');
+        addXp(cDef.xp, plot.gx, plot.gy);
+        // 15% Lucky Drop roll!
+        rollLuckyDrop(plot.gx, plot.gy);
+      }
 
-      // 15% Lucky Drop roll!
-      rollLuckyDrop(plot.gx, plot.gy);
       updateHUD();
       saveGame();
       return true;
@@ -1825,16 +2000,18 @@
 
     function interactPet(pet) {
       if (state.level < 4 && !state.petsUnlocked) {
-        spawnToastBanner('🔒 Chuồng Thú Cưng mở khóa ở Cấp 4!');
+        spawnToastBanner('🔒 Chuồng Thú Cưng mở khóa ở Cấp 4 (hoặc đổi Thú Cưng tại Bến Tàu VIP)!');
         return;
       }
+      if (!pet) return;
+      const isExotic = pet.type === 'peacock' || pet.type === 'unicorn' || pet.type === 'fox';
       playSound('pet');
-      spawnParticlesAtGrid(pet.gx, pet.gy, '#f43f5e', 18);
-      spawnCurvedFloatText(`❤️ ${pet.name} vui sướng!`, pet.gx, pet.gy, '#fda4af', 'none');
-      addXp(12, pet.gx, pet.gy);
+      spawnParticlesAtGrid(pet.gx, pet.gy, isExotic ? '#fde047' : '#f43f5e', isExotic ? 26 : 18);
+      spawnCurvedFloatText(`❤️ ${pet.name} vui sướng!`, pet.gx, pet.gy, isExotic ? '#fde047' : '#fda4af', 'none');
+      addXp(isExotic ? 35 : 12, pet.gx, pet.gy);
 
-      // 35% chance for pet to dig up a rare material when petted/fed!
-      if (Math.random() < 0.35) {
+      // Exotic pets have a 65% chance (regular pets 35%) to dig up a rare material or diamond!
+      if (Math.random() < (isExotic ? 0.65 : 0.35)) {
         rollLuckyDrop(pet.gx, pet.gy);
       }
     }
@@ -1888,10 +2065,11 @@
 
     function isTilePlacementValid(gx, gy, size = 1, ignoreRef = null) {
       if (gx < 2 || gy < 2 || gx + size > GRID_SIZE - 2 || gy + size > GRID_SIZE - 2) return false;
-      // Avoid river/pond water tiles (gx <= 7, gy >= 11 && gy <= 18) and main road (gy === 18)
+      // Avoid river/pond water tiles (gx <= 7, gy >= 11 && gy <= 18), Southern River (gy >= 25) and main road (gy === 18)
       for (let x = gx; x < gx + size; x++) {
         for (let y = gy; y < gy + size; y++) {
           if (y === 18 || y === 17) return false; // Main road
+          if (y >= 25) return false; // Southern River & Steamship Dock
           if (x <= 7 && y >= 11 && y <= 17) return false; // Fishing pond
         }
       }
@@ -2101,64 +2279,144 @@
       ctx.restore();
     }
 
-    // 1. RENDER FARMHOUSE (Evolves with Player Level!)
+    // Soft Ambient Occlusion Elliptical Shadow underneath 2.5D objects
+    function drawSoftAOShadow(gx, gy, rx = 38, ry = 19, alpha = 0.28) {
+      const pt = gridToScreen(gx, gy, 0);
+      ctx.save();
+      const rX = rx * cam.zoom;
+      const rY = ry * cam.zoom;
+      const grad = ctx.createRadialGradient(pt.x, pt.y, 2, pt.x, pt.y, rX);
+      grad.addColorStop(0, `rgba(15, 23, 15, ${alpha})`);
+      grad.addColorStop(1, 'rgba(15, 23, 15, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(pt.x, pt.y, rX, rY, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // True 3D Pitched Isometric Roof with Ridge Highlight & Overhang
+    function drawIsoPitchedRoof(gx, gy, w, d, zBase, ridgeH, leftSlopeColor, rightSlopeColor, gableColor) {
+      const eaveNW = gridToScreen(gx - 0.08,     gy - 0.08,     zBase);
+      const eaveNE = gridToScreen(gx + w + 0.08, gy - 0.08,     zBase);
+      const eaveSE = gridToScreen(gx + w + 0.08, gy + d + 0.08, zBase);
+      const eaveSW = gridToScreen(gx - 0.08,     gy + d + 0.08, zBase);
+
+      const ridgeBack  = gridToScreen(gx + w / 2, gy + 0.05,     zBase + ridgeH);
+      const ridgeFront = gridToScreen(gx + w / 2, gy + d - 0.05, zBase + ridgeH);
+
+      // Left Slope (SW -> NW -> RidgeBack -> RidgeFront)
+      ctx.beginPath();
+      ctx.moveTo(eaveSW.x, eaveSW.y);
+      ctx.lineTo(eaveNW.x, eaveNW.y);
+      ctx.lineTo(ridgeBack.x, ridgeBack.y);
+      ctx.lineTo(ridgeFront.x, ridgeFront.y);
+      ctx.closePath();
+      ctx.fillStyle = leftSlopeColor;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1.2 * cam.zoom;
+      ctx.stroke();
+
+      // Right Slope (SE -> NE -> RidgeBack -> RidgeFront)
+      ctx.beginPath();
+      ctx.moveTo(eaveSE.x, eaveSE.y);
+      ctx.lineTo(eaveNE.x, eaveNE.y);
+      ctx.lineTo(ridgeBack.x, ridgeBack.y);
+      ctx.lineTo(ridgeFront.x, ridgeFront.y);
+      ctx.closePath();
+      ctx.fillStyle = rightSlopeColor;
+      ctx.fill();
+      ctx.stroke();
+
+      // Front Gable Triangle (eaveSW -> ridgeFront -> eaveSE)
+      ctx.beginPath();
+      ctx.moveTo(eaveSW.x, eaveSW.y);
+      ctx.lineTo(ridgeFront.x, ridgeFront.y);
+      ctx.lineTo(eaveSE.x, eaveSE.y);
+      ctx.closePath();
+      ctx.fillStyle = gableColor;
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 1. RENDER FARMHOUSE (Evolves with Player Level + Pitched Roof & Windows!)
     function drawFarmhouse(fh, timeSec) {
       const { gx, gy } = fh;
-      // Shadow base
-      drawIsoPrism(gx, gy, 2.6, 2.6, 4, '#78350f', '#451a03', '#290f02', 0);
-      // First floor walls
-      drawIsoPrism(gx + 0.2, gy + 0.2, 2.2, 2.2, 34, '#fffbeb', '#fef3c7', '#fde68a', 4);
-      // Second floor (Villa style)
-      drawIsoPrism(gx + 0.4, gy + 0.4, 1.7, 1.7, 26, '#fff7ed', '#ffedd5', '#fed7aa', 38);
-      // Red/Golden Roof depending on Farm Level
+      drawSoftAOShadow(gx + 1.3, gy + 1.3, 82, 42, 0.36);
+      // Stone veranda foundation
+      drawIsoPrism(gx, gy, 2.6, 2.6, 5, '#a8a29e', '#78716c', '#57534e', 0);
+      // Timber-framed First Floor
+      drawIsoPrism(gx + 0.18, gy + 0.18, 2.24, 2.24, 34, '#fffbeb', '#fef3c7', '#fde68a', 5);
+      // Second Floor Villa
+      drawIsoPrism(gx + 0.38, gy + 0.38, 1.84, 1.84, 26, '#fff7ed', '#ffedd5', '#fed7aa', 39);
+
       const isHighLv = state.level >= 4;
-      const roofTop  = isHighLv ? '#f59e0b' : '#ef4444';
-      const roofLeft = isHighLv ? '#d97706' : '#dc2626';
-      const roofRight= isHighLv ? '#b45309' : '#991b1b';
-      drawIsoPrism(gx + 0.25, gy + 0.25, 2.0, 2.0, 14, roofTop, roofLeft, roofRight, 64);
-      drawIsoPrism(gx + 0.55, gy + 0.55, 1.4, 1.4, 10, roofTop, roofLeft, roofRight, 78);
+      drawIsoPitchedRoof(
+        gx + 0.32, gy + 0.32, 1.96, 1.96, 65, 26,
+        isHighLv ? '#fbbf24' : '#ef4444',
+        isHighLv ? '#d97706' : '#b91c1c',
+        '#fef3c7'
+      );
 
       // Warm windows & Night Lanterns
-      drawNightLanternGlow(gx + 1.5, gy + 2.2, 24, 65);
-      drawNightLanternGlow(gx + 2.2, gy + 1.5, 24, 65);
+      drawNightLanternGlow(gx + 1.5, gy + 2.2, 24, 68);
+      drawNightLanternGlow(gx + 2.2, gy + 1.5, 24, 68);
 
-      const centerPt = gridToScreen(gx + 1.3, gy + 1.3, 98 + Math.sin(timeSec * 2.5) * 3);
+      const centerPt = gridToScreen(gx + 1.3, gy + 1.3, 102 + Math.sin(timeSec * 2.5) * 3);
       ctx.save();
-      ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+      ctx.font = `${Math.round(23 * cam.zoom)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillText(state.level >= 4 ? '🏰' : '🏡', centerPt.x, centerPt.y);
       ctx.restore();
-      drawWorldBadge(gx + 1.3, gy + 1.3, 118, `${state.farmName} (Lv.${state.level})`);
+      drawWorldBadge(gx + 1.3, gy + 1.3, 122, `${state.farmName} (Lv.${state.level})`);
     }
 
     // 2. RENDER SILO & BARN
     function drawSiloAndBarn(timeSec) {
-      // Silo (Cylindrical/Octagonal tower look)
       const s = state.silo;
+      drawSoftAOShadow(s.gx + 0.85, s.gy + 0.85, 52, 26, 0.32);
       drawIsoPrism(s.gx, s.gy, 1.7, 1.7, 54, '#ef4444', '#dc2626', '#991b1b', 0);
-      drawIsoPrism(s.gx - 0.05, s.gy - 0.05, 1.8, 1.8, 14, '#e2e8f0', '#cbd5e1', '#94a3b8', 54);
-      drawWorldBadge(s.gx + 0.8, s.gy + 0.8, 82, `🌾 Silo Lv.${state.barnLevel}`);
+      drawIsoPitchedRoof(s.gx, s.gy, 1.7, 1.7, 54, 18, '#e2e8f0', '#94a3b8', '#cbd5e1');
+      drawWorldBadge(s.gx + 0.8, s.gy + 0.8, 84, `🌾 Silo Lv.${state.barnLevel}`);
 
-      // Barn (Red Hay Day Barn with Hay Bales)
       const b = state.barn;
-      drawIsoPrism(b.gx, b.gy, 2.1, 2.1, 44, '#ef4444', '#b91c1c', '#7f1d1d', 0);
-      drawIsoPrism(b.gx - 0.1, b.gy - 0.1, 2.3, 2.3, 16, '#f8fafc', '#cbd5e1', '#64748b', 44);
+      drawSoftAOShadow(b.gx + 1.05, b.gy + 1.05, 66, 33, 0.35);
+      drawIsoPrism(b.gx, b.gy, 2.1, 2.1, 42, '#ef4444', '#dc2626', '#991b1b', 0);
+      drawIsoPitchedRoof(b.gx, b.gy, 2.1, 2.1, 42, 22, '#f8fafc', '#cbd5e1', '#b91c1c');
       // Golden Hay bale beside Barn
       drawIsoPrism(b.gx + 1.6, b.gy + 2.1, 0.6, 0.6, 12, '#fde047', '#eab308', '#ca8a04', 0);
-      drawNightLanternGlow(b.gx + 1.2, b.gy + 2.1, 22, 55);
-      drawWorldBadge(b.gx + 1.0, b.gy + 1.0, 76, `📦 Kho ${getTotalStored()}/${state.storageCap}`);
+      drawNightLanternGlow(b.gx + 1.2, b.gy + 2.1, 22, 58);
+      drawWorldBadge(b.gx + 1.0, b.gy + 1.0, 78, `📦 Kho ${getTotalStored()}/${state.storageCap}`);
     }
 
-    // 3. RENDER CROP PLOT
+    // 3. RENDER CROP PLOT (WITH EXPANSION 2: GIANT GOLDEN MUTANT CROP SHADER!)
     function drawCropPlot(plot, timeSec) {
       if (plot.bounce > 0) plot.bounce = Math.max(0, plot.bounce - 0.08);
       const zLift = plot.bounce * 8;
 
       const isHovered = hoverGrid.gx === plot.gx && hoverGrid.gy === plot.gy;
-      const soilTop = plot.crop ? '#78350f' : (isHovered ? '#a16207' : '#854d0e');
+      const isMutant = !!plot.isMutant;
+
+      // Golden Rotating Aura Halo under Mutant Crop!
+      if (isMutant && plot.crop) {
+        const haloPt = gridToScreen(plot.gx + 0.5, plot.gy + 0.5, 2);
+        const rad = 36 * cam.zoom;
+        const grad = ctx.createRadialGradient(haloPt.x, haloPt.y, 2, haloPt.x, haloPt.y, rad);
+        grad.addColorStop(0, 'rgba(253, 224, 71, 0.9)');
+        grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.45)');
+        grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(haloPt.x, haloPt.y, rad, rad * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      const soilTop = isMutant && plot.crop ? '#b45309' : (plot.crop ? '#78350f' : (isHovered ? '#a16207' : '#854d0e'));
       drawIsoPrism(plot.gx + 0.06, plot.gy + 0.06, 0.88, 0.88, 5, soilTop, '#5c2d0c', '#451a03', zLift);
 
-      // Furrow lines on soil
       const cPt = gridToScreen(plot.gx + 0.5, plot.gy + 0.5, 6 + zLift);
 
       if (plot.crop) {
@@ -2167,21 +2425,44 @@
         const prog = Math.min(1, elapsed / plot.growDuration);
 
         if (prog < 1) {
-          // Growing sprouts
-          const h = 6 + prog * 14;
-          drawIsoPrism(plot.gx + 0.28, plot.gy + 0.28, 0.44, 0.44, h, '#4ade80', '#22c55e', '#15803d', 5 + zLift);
+          const h = (6 + prog * 14) * (isMutant ? 1.45 : 1);
+          drawIsoPrism(
+            plot.gx + 0.25, plot.gy + 0.25, 0.5, 0.5, h,
+            isMutant ? '#fde047' : '#4ade80',
+            isMutant ? '#f59e0b' : '#22c55e',
+            isMutant ? '#b45309' : '#15803d',
+            5 + zLift
+          );
           const rem = Math.ceil((plot.growDuration - elapsed) / 1000);
-          drawWorldBadge(plot.gx + 0.5, plot.gy + 0.5, 28, `${cDef.icon} ${rem}s`, 'rgba(20,83,45,0.85)', '#bbf7d0');
+          drawWorldBadge(
+            plot.gx + 0.5, plot.gy + 0.5, 30,
+            isMutant ? `🌟 ĐỘT BIẾN ${rem}s` : `${cDef.icon} ${rem}s`,
+            isMutant ? 'rgba(180,83,9,0.95)' : 'rgba(20,83,45,0.85)',
+            isMutant ? '#fef08a' : '#bbf7d0'
+          );
         } else {
-          // RIPE CROP! Swaying + Golden Sparkle
+          // RIPE CROP! Giant Golden 1.7x Scale if Mutant!
           const sway = Math.sin(timeSec * 4 + plot.gx) * 3 * cam.zoom;
-          drawIsoPrism(plot.gx + 0.2, plot.gy + 0.2, 0.6, 0.6, 16, cDef.colorTop, cDef.colorStem, cDef.colorStem, 5 + zLift);
-          ctx.save();
-          ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(cDef.icon, cPt.x + sway, cPt.y - 16 * cam.zoom);
-          ctx.restore();
+          if (isMutant) {
+            drawIsoPrism(plot.gx + 0.14, plot.gy + 0.14, 0.72, 0.72, 24, '#fef08a', '#f59e0b', '#b45309', 5 + zLift);
+            ctx.save();
+            ctx.font = `${Math.round(34 * cam.zoom)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cDef.icon, cPt.x + sway, cPt.y - 24 * cam.zoom);
+            ctx.font = `${Math.round(15 * cam.zoom)}px sans-serif`;
+            ctx.fillText('✨🌟✨', cPt.x, cPt.y - 44 * cam.zoom + Math.sin(timeSec * 6) * 3);
+            ctx.restore();
+            drawWorldBadge(plot.gx + 0.5, plot.gy + 0.5, 58, '🌟 KHỔNG LỒ x5!', 'rgba(180,83,9,0.96)', '#fef08a');
+          } else {
+            drawIsoPrism(plot.gx + 0.2, plot.gy + 0.2, 0.6, 0.6, 16, cDef.colorTop, cDef.colorStem, cDef.colorStem, 5 + zLift);
+            ctx.save();
+            ctx.font = `${Math.round(22 * cam.zoom)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cDef.icon, cPt.x + sway, cPt.y - 16 * cam.zoom);
+            ctx.restore();
+          }
         }
       }
     }
@@ -2445,8 +2726,25 @@
         return;
       }
       if (dec.type === 'lantern_post') {
+        drawSoftAOShadow(dec.gx + 0.2, dec.gy + 0.2, 0.6, 0.6, 0.25);
         drawIsoPrism(dec.gx + 0.4, dec.gy + 0.4, 0.2, 0.2, 26, '#fbbf24', '#475569', '#1e293b', 0);
         drawNightLanternGlow(dec.gx + 0.5, dec.gy + 0.5, 28, 70);
+      }
+      // Golden Voucher Masterpiece Statues (2.5D Pedestal + Golden Aura)
+      if (def.voucherOnly || def.voucherCost) {
+        const w = dec.size || 2;
+        drawSoftAOShadow(dec.gx, dec.gy, w, w, 0.4);
+        drawIsoPrism(dec.gx + 0.15, dec.gy + 0.15, w - 0.3, w - 0.3, 14, '#fef08a', '#eab308', '#a16207', 0);
+        drawIsoPrism(dec.gx + 0.3, dec.gy + 0.3, w - 0.6, w - 0.6, 10, '#fffbeb', '#facc15', '#ca8a04', 14);
+        drawNightLanternGlow(dec.gx + w / 2, dec.gy + w / 2, 26, 75);
+        const pt = gridToScreen(dec.gx + w / 2, dec.gy + w / 2, 34 + Math.sin(timeSec * 3) * 3);
+        ctx.save();
+        ctx.font = `${Math.round(32 * cam.zoom)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(def.icon, pt.x, pt.y);
+        ctx.restore();
+        drawWorldBadge(dec.gx + w / 2, dec.gy + w / 2, 58, `👑 ${def.name}`, 'rgba(120,53,15,0.92)', '#fde047');
+        return;
       }
       const pt = gridToScreen(dec.gx + 0.5, dec.gy + 0.5, 18);
       ctx.save();
@@ -2454,6 +2752,130 @@
       ctx.textAlign = 'center';
       ctx.fillText(def.icon, pt.x, pt.y);
       ctx.restore();
+    }
+
+    // EXPANSION 3: HÒM THƯ & SẠP BÁO HÀNG XÓM (DAILY DIRT NEWSPAPER AT FARM GATE)
+    function drawMailboxAndNewspaper(timeSec) {
+      const gx = 12.1, gy = 16.5;
+      drawSoftAOShadow(gx, gy, 1.1, 1.1, 0.35);
+      // Wooden post + Red 2.5D Mailbox
+      drawIsoPrism(gx + 0.2, gy + 0.2, 0.18, 0.18, 16, '#d97706', '#92400e', '#78350f', 0);
+      drawIsoPrism(gx + 0.08, gy + 0.08, 0.45, 0.35, 11, '#ef4444', '#dc2626', '#991b1b', 16);
+      // Newspaper Rack (The Daily Dirt Stand)
+      drawIsoPrism(gx + 0.58, gy + 0.15, 0.45, 0.45, 18, '#fef3c7', '#d97706', '#92400e', 0);
+      drawIsoPrism(gx + 0.62, gy + 0.19, 0.36, 0.36, 6, '#ffffff', '#e2e8f0', '#94a3b8', 18);
+
+      const availAds = (state.newspaperAds || []).filter(a => !a.sold).length;
+      const bounce = availAds > 0 ? Math.abs(Math.sin(timeSec * 5.5)) * 5 : 0;
+      const pt = gridToScreen(gx + 0.5, gy + 0.4, 30 + bounce);
+      ctx.save();
+      ctx.font = `${Math.round(20 * cam.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('📰', pt.x, pt.y);
+      ctx.restore();
+
+      if (availAds > 0) {
+        drawWorldBadge(gx + 0.45, gy + 0.4, 48 + bounce, `📰 Báo Hàng Xóm (${availAds} Deal!)`, 'rgba(254,243,199,0.96)', '#78350f');
+      } else {
+        drawWorldBadge(gx + 0.45, gy + 0.4, 44, `📰 Nhật Báo (${Math.ceil(newspaperTimer)}s)`, 'rgba(30,41,59,0.88)', '#e2e8f0');
+      }
+    }
+
+    // EXPANSION 1: BẾN TÀU HƠI NƯỚC & TÀU THƯƠNG NHÂN VIP (SOUTHERN RIVER STEAMSHIP DOCK)
+    function drawSteamshipAndDock(timeSec) {
+      // 1. Stone & Timber Pier extending from gy = 25 to gy = 27.2 at gx = 13.5..17.5
+      drawSoftAOShadow(13.3, 24.8, 4.4, 2.6, 0.35);
+      // Pier support pilings in water
+      for (let px = 13.6; px <= 17.4; px += 1.2) {
+        drawIsoPrism(px, 26.6, 0.25, 0.25, 14, '#78350f', '#451a03', '#271001', -4);
+      }
+      // Wooden plank deck of the pier
+      drawIsoPrism(13.5, 25.0, 4.0, 2.0, 10, '#d97706', '#b45309', '#78350f', 2);
+      // Harbourmaster Ticket Booth on left of pier
+      drawIsoPrism(13.6, 25.1, 1.1, 1.1, 22, '#fef3c7', '#fde68a', '#d97706', 12);
+      drawIsoPitchedRoof(13.6, 25.1, 1.1, 1.1, 34, 12, '#0284c7', '#0369a1', '#075985', '#38bdf8');
+      // Brass Mooring Bollards & Dock Lanterns
+      drawIsoPrism(15.2, 26.6, 0.25, 0.25, 8, '#fbbf24', '#d97706', '#78350f', 12);
+      drawIsoPrism(16.8, 26.6, 0.25, 0.25, 8, '#fbbf24', '#d97706', '#78350f', 12);
+      drawNightLanternGlow(14.0, 25.5, 28, 85);
+      drawNightLanternGlow(17.2, 26.5, 22, 85);
+
+      // 2. Animated 2.5D Paddle Steamship on the Southern River (gy = 27.6)
+      const ship = state.steamship;
+      if (ship) {
+        const sx = ship.shipX !== undefined ? ship.shipX : 15.0;
+        const sy = 27.5;
+        const bob = Math.sin(timeSec * 3.2) * 2.5;
+
+        // Water wake & foam ripples around hull
+        const wakePt = gridToScreen(sx + 2.2, sy + 0.6, bob);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.65)';
+        ctx.lineWidth = 2.2 * cam.zoom;
+        ctx.beginPath();
+        ctx.ellipse(wakePt.x, wakePt.y, 68 * cam.zoom, 24 * cam.zoom, -0.15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Lower Ship Hull (Crimson & Dark Mahogany)
+        drawIsoPrism(sx, sy, 4.4, 1.5, 14, '#991b1b', '#7f1d1d', '#450a0a', bob);
+        // Main Ivory Promenade Deck
+        drawIsoPrism(sx + 0.2, sy + 0.1, 4.0, 1.3, 12, '#f8fafc', '#e2e8f0', '#cbd5e1', 14 + bob);
+        // Captain's Wheelhouse & Upper Cabin
+        drawIsoPrism(sx + 0.5, sy + 0.2, 1.6, 1.1, 14, '#fef3c7', '#fde68a', '#d97706', 26 + bob);
+        drawIsoPrism(sx + 0.45, sy + 0.15, 1.7, 1.2, 4, '#0284c7', '#0369a1', '#075985', 40 + bob);
+
+        // Twin Brass-Rimmed Smokestacks puffing steam
+        drawIsoPrism(sx + 1.0, sy + 0.35, 0.35, 0.35, 18, '#1e293b', '#0f172a', '#020617', 44 + bob);
+        drawIsoPrism(sx + 1.0, sy + 0.35, 0.37, 0.37, 4, '#fbbf24', '#d97706', '#92400e', 58 + bob);
+        drawIsoPrism(sx + 1.6, sy + 0.35, 0.35, 0.35, 18, '#1e293b', '#0f172a', '#020617', 44 + bob);
+        drawIsoPrism(sx + 1.6, sy + 0.35, 0.37, 0.37, 4, '#fbbf24', '#d97706', '#92400e', 58 + bob);
+
+        // Animated Steam Puffs rising from smokestacks
+        const puffPt = gridToScreen(sx + 1.3, sy + 0.5, 68 + bob + ((timeSec * 16) % 18));
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.beginPath();
+        ctx.arc(puffPt.x, puffPt.y, 7 * cam.zoom, 0, Math.PI * 2);
+        ctx.arc(puffPt.x + 10 * cam.zoom, puffPt.y - 6 * cam.zoom, 5 * cam.zoom, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Side Paddlewheel (Red & Gold)
+        drawIsoPrism(sx + 0.1, sy + 1.25, 0.9, 0.35, 12, '#ef4444', '#dc2626', '#991b1b', 8 + bob);
+
+        // 4 Cargo Crates on the Foredeck (sx + 2.3 .. sx + 3.9)
+        const crates = ship.crates || [];
+        for (let i = 0; i < 4; i++) {
+          const cx = sx + 2.35 + (i % 2) * 0.82;
+          const cy = sy + 0.22 + Math.floor(i / 2) * 0.55;
+          const packed = crates[i] && crates[i].packed;
+          if (packed) {
+            drawIsoPrism(cx, cy, 0.62, 0.45, 10, '#4ade80', '#16a34a', '#15803d', 26 + bob);
+          } else {
+            drawIsoPrism(cx, cy, 0.62, 0.45, 10, '#fcd34d', '#d97706', '#92400e', 26 + bob);
+          }
+        }
+      }
+
+      // 3. Floating Dock Status Badge
+      if (ship && ship.status === 'docked') {
+        const packedCount = (ship.crates || []).filter(c => c.packed).length;
+        const rem = Math.max(0, Math.ceil(ship.timer || 0));
+        drawWorldBadge(
+          15.5, 26.2, 54,
+          `🚢 Tàu VIP: Đóng ${packedCount}/4 Thùng (${rem}s) • Nhận Voucher🎫`,
+          packedCount === 4 ? 'rgba(22,163,74,0.95)' : 'rgba(3,105,161,0.95)',
+          '#fef08a'
+        );
+      } else if (ship) {
+        const rem = Math.max(0, Math.ceil(ship.timer || 0));
+        drawWorldBadge(
+          15.5, 26.0, 44,
+          `🌊 Tàu Hơi Nước đang về bến (${rem}s) — Click gọi sớm!`,
+          'rgba(15,23,42,0.9)', '#bae6fd'
+        );
+      }
     }
 
     function drawCharacter(gx, gy, emoji, label, bubble, timeSec) {
@@ -2490,23 +2912,38 @@
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 1. RENDER 32x32 ISOMETRIC GROUND TILES
+      // 1. RENDER 32x32 ISOMETRIC GROUND TILES WITH ENHANCED 2.5D TEXTURE DETAILS
       for (let gx = 0; gx < GRID_SIZE; gx++) {
         for (let gy = 0; gy < GRID_SIZE; gy++) {
           let tileColor = (gx + gy) % 2 === 0 ? '#65a30d' : '#4d7c0f';
+          let tileType = 'grass';
 
-          // Main Cobblestone / Dirt Road at gy = 18
-          if (gy === 18) {
+          // Southern River for Steamship Dock (gy >= 27)
+          if (gy >= 27) {
+            const wave = Math.sin(timeSec * 2.8 + gx * 0.6 + gy * 0.8);
+            tileColor = wave > 0.2 ? '#0284c7' : (wave > -0.3 ? '#0369a1' : '#075985');
+            tileType = 'water';
+          }
+          // Sandy Riverbank along gy === 26
+          else if (gy === 26) {
+            tileColor = (gx + gy) % 2 === 0 ? '#fde68a' : '#fcd34d';
+            tileType = 'sand';
+          }
+          // Main Cobblestone / Dirt Road at gy = 18 OR Avenue down to Steamship Dock (gx === 15, gy 18..25)
+          else if (gy === 18 || (gx === 15 && gy >= 18 && gy <= 25)) {
             tileColor = (gx + gy) % 2 === 0 ? '#d6b37c' : '#c29b61';
+            tileType = 'road';
           }
           // Fishing Pond & Stream Water (gx <= 7, gy 11..18)
           else if (gx <= 7 && gy >= 11 && gy <= 18) {
             const wave = Math.sin(timeSec * 3 + gx * 0.7 + gy * 0.5) * 8;
             tileColor = wave > 0 ? '#0284c7' : '#0369a1';
+            tileType = 'water';
           }
           // Northeast Cliff Rocky Floor (gx >= 22, gy <= 7)
           else if (gx >= 22 && gy <= 7) {
             tileColor = (gx + gy) % 2 === 0 ? '#64748b' : '#475569';
+            tileType = 'rock';
           }
 
           // Highlight Hovered Grid Tile
@@ -2515,6 +2952,29 @@
           }
 
           drawIsoTile(gx, gy, tileColor);
+
+          // Procedural Micro-Details (Grass Tufts, Wildflowers, Water Shimmer, Cobblestones)
+          if (cam.zoom >= 0.65) {
+            const hash = (gx * 37 + gy * 17) % 19;
+            if (tileType === 'grass' && hash === 0) {
+              const pt = gridToScreen(gx + 0.5, gy + 0.5, 0);
+              ctx.fillStyle = '#84cc16';
+              ctx.fillRect(pt.x - 2, pt.y - 2, 3, 3);
+            } else if (tileType === 'grass' && hash === 5) {
+              const pt = gridToScreen(gx + 0.4, gy + 0.6, 0);
+              ctx.fillStyle = '#fef08a';
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, 2 * cam.zoom, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tileType === 'water' && ((gx + gy) % 3 === 0)) {
+              const shimmer = Math.sin(timeSec * 4 + gx * 1.3 + gy);
+              if (shimmer > 0.55) {
+                const pt = gridToScreen(gx + 0.5, gy + 0.5, 0);
+                ctx.fillStyle = 'rgba(224, 242, 254, 0.55)';
+                ctx.fillRect(pt.x - 6 * cam.zoom, pt.y - 1, 12 * cam.zoom, 2 * cam.zoom);
+              }
+            }
+          }
         }
       }
 
@@ -2541,10 +3001,12 @@
 
       renderList.push({ depth: state.farmhouse.gx + state.farmhouse.gy + 2.5, draw: () => drawFarmhouse(state.farmhouse, timeSec) });
       renderList.push({ depth: state.silo.gx + state.silo.gy + 1.6, draw: () => drawSiloAndBarn(timeSec) });
+      renderList.push({ depth: 12.1 + 16.5 + 1.1, draw: () => drawMailboxAndNewspaper(timeSec) });
       renderList.push({ depth: 14 + 16.5 + 1.2, draw: () => drawRoadsideShop(timeSec) });
       renderList.push({ depth: 6.5 + 14.5, draw: () => drawFishingPondAndBridge(timeSec) });
       renderList.push({ depth: 24 + 4 + 2.5, draw: () => drawMineAndCliff(timeSec) });
       renderList.push({ depth: truckAnim.gx + truckAnim.gy + 1.2, draw: () => drawOrderBoardAndTruck(timeSec) });
+      renderList.push({ depth: 15.5 + 27.5 + 2.0, draw: () => drawSteamshipAndDock(timeSec) });
 
       for (const plot of state.plots) {
         renderList.push({ depth: plot.gx + plot.gy + 0.5, draw: () => drawCropPlot(plot, timeSec) });
@@ -2562,12 +3024,14 @@
         renderList.push({ depth: dec.gx + dec.gy + 0.4, draw: () => drawDecoration(dec, timeSec) });
       }
 
-      // Pets (Lv.4)
+      // Pets (Lv.4 + Rare Voucher Exotic Pets: Peacock 🦚, Unicorn 🦄, Fox 🦊)
       if (state.level >= 4 || state.petsUnlocked) {
+        const petEmojiMap = { dog: '🐶', cat: '🐱', peacock: '🦚', unicorn: '🦄', fox: '🦊' };
         for (const pet of state.pets) {
+          const icon = petEmojiMap[pet.type] || '🐶';
           renderList.push({
             depth: pet.gx + pet.gy + 0.6,
-            draw: () => drawCharacter(pet.gx, pet.gy, pet.type === 'dog' ? '🐶' : '🐱', pet.name, null, timeSec)
+            draw: () => drawCharacter(pet.gx, pet.gy, icon, pet.name, null, timeSec)
           });
         }
       }
@@ -2819,7 +3283,13 @@
         return;
       }
 
-      // 8. Check Roadside Shop (gx: 13..16, gy: 16..18)
+      // 8. Check Mailbox & Daily Dirt Newspaper (gx === 12, gy: 16..17)
+      if (gx === 12 && (gy === 16 || gy === 17)) {
+        openModal('newspaperModal');
+        return;
+      }
+
+      // 8b. Check Roadside Shop (gx: 13..16, gy: 16..18)
       if (gx >= 13 && gx <= 16 && gy >= 16 && gy <= 18) {
         const soldStalls = state.roadsideStalls.filter(s => s.sold);
         if (soldStalls.length > 0) {
@@ -2830,9 +3300,15 @@
         return;
       }
 
-      // 9. Check Order Board & Delivery Truck (gx: 9..12, gy: 16..18)
-      if (gx >= 9 && gx <= 12 && gy >= 16 && gy <= 18) {
+      // 9. Check Order Board & Delivery Truck (gx: 9..11, gy: 16..18)
+      if (gx >= 9 && gx <= 11 && gy >= 16 && gy <= 18) {
         openModal('ordersModal');
+        return;
+      }
+
+      // 9b. Check Southern River Steamship Dock (gy >= 24 && gx >= 11 && gx <= 20)
+      if (gy >= 24 && gx >= 11 && gx <= 20) {
+        openModal('steamshipModal');
         return;
       }
 
@@ -3019,6 +3495,26 @@
         bAch.textContent = claimableAch;
       }
 
+      // Expansion 1 & 3 Dock Badges: Newspaper & Steamship
+      const bNews = document.getElementById('badgeNewspaper');
+      if (bNews) {
+        const availAds = (state.newspaperAds || []).filter(a => !a.sold).length;
+        bNews.classList.toggle('hidden', availAds === 0);
+        bNews.textContent = availAds;
+      }
+
+      const bShip = document.getElementById('badgeSteamship');
+      if (bShip && state.steamship) {
+        if (state.steamship.status === 'docked') {
+          const packed = (state.steamship.crates || []).filter(c => c.packed).length;
+          bShip.textContent = `${packed}/4`;
+          bShip.className = 'badge-dot bg-sky-600 text-white';
+        } else {
+          bShip.textContent = '🌊';
+          bShip.className = 'badge-dot bg-slate-700 text-sky-200';
+        }
+      }
+
       renderBrushBar();
     }
 
@@ -3046,6 +3542,8 @@
       if (id === 'factoriesModal') renderFactoriesModal();
       if (id === 'shopModal') renderShopModal();
       if (id === 'wheelModal') renderWheelModal();
+      if (id === 'steamshipModal') renderSteamshipModal();
+      if (id === 'newspaperModal') renderNewspaperModal();
     }
 
     function closeModal(id) {
@@ -3652,12 +4150,14 @@
               </button>
             ` : `
               <div class="grid grid-cols-2 gap-2 mt-2">
-                <button onclick="interactPet(state.pets[0])" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
-                  🐶 Cưng nựng Cún Milo
-                </button>
-                <button onclick="interactPet(state.pets[1])" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
-                  🐱 Cưng nựng Mèo Miu
-                </button>
+                ${state.pets.map((p, idx) => {
+                  const pIcons = { dog: '🐶', cat: '🐱', peacock: '🦚', unicorn: '🦄', fox: '🦊' };
+                  return `
+                    <button onclick="interactPet(state.pets[${idx}])" class="btn-juice btn-green py-2 px-3 rounded-xl font-black text-xs">
+                      ${pIcons[p.type] || '🐾'} Cưng nựng ${p.name}
+                    </button>
+                  `;
+                }).join('')}
               </div>
             `}
           </div>
@@ -4099,7 +4599,7 @@
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-            ${Object.values(DECORATIONS).map(d => `
+            ${Object.values(DECORATIONS).filter(d => !d.voucherOnly).map(d => `
               <div class="parchment-card p-3 flex flex-col items-center text-center justify-between">
                 <span class="text-3xl">${d.icon}</span>
                 <div class="font-black text-xs mt-1">${d.name}</div>
@@ -4411,6 +4911,469 @@
     }
 
     /*************************************************************************
+     * 17B. EXPANSION 1: STEAMSHIP DOCK & COLORED VOUCHER EXCHANGE (BẾN TÀU VIP)
+     *************************************************************************/
+    function generateSteamshipCrates() {
+      if (!state.steamship) {
+        state.steamship = { status: 'docked', timer: 120, crates: [], shipX: 14.8 };
+      }
+      if (state.steamship.crates && state.steamship.crates.length === 4) return;
+
+      const pool = ['wheat', 'corn', 'egg', 'bread'];
+      if (state.level >= 2) pool.push('carrot', 'sugarcane', 'milk', 'cornbread', 'cream', 'cheese', 'sugar');
+      if (state.level >= 3) pool.push('strawberry', 'wool', 'salmon', 'strawberry_cake');
+      if (state.level >= 4) pool.push('grape', 'lobster', 'grape_gelato');
+
+      const crates = [];
+      for (let i = 0; i < 4; i++) {
+        const itemId = pool[Math.floor(Math.random() * pool.length)];
+        const itemDef = ITEMS[itemId] || ITEMS.wheat;
+        const qty = itemDef.cat === 'crop' ? (4 + Math.floor(Math.random() * 4)) : (2 + Math.floor(Math.random() * 2));
+        const gold = Math.round(itemDef.sellPrice * qty * 1.65);
+        const xp = 25 + qty * 8;
+        crates.push({
+          idx: i,
+          item: itemId,
+          qty,
+          gold,
+          xp,
+          packed: false
+        });
+      }
+      state.steamship.crates = crates;
+    }
+
+    function renderSteamshipModal() {
+      if (!state.vouchers) state.vouchers = { blue: 2, red: 1, gold: 1 };
+      generateSteamshipCrates();
+
+      const bEl = document.getElementById('vCountBlue');
+      const rEl = document.getElementById('vCountRed');
+      const gEl = document.getElementById('vCountGold');
+      if (bEl) bEl.textContent = state.vouchers.blue || 0;
+      if (rEl) rEl.textContent = state.vouchers.red || 0;
+      if (gEl) gEl.textContent = state.vouchers.gold || 0;
+
+      const container = document.getElementById('steamshipModalContent');
+      if (!container) return;
+
+      const ship = state.steamship;
+      const packedCount = (ship.crates || []).filter(c => c.packed).length;
+      const remSec = Math.max(0, Math.ceil(ship.timer || 0));
+
+      const cratesHtml = (ship.crates || []).map((c, idx) => {
+        const def = ITEMS[c.item] || ITEMS.wheat;
+        const have = state.inventory[c.item] || 0;
+        const canPack = ship.status === 'docked' && !c.packed && have >= c.qty;
+        return `
+          <div class="parchment-card p-3.5 flex flex-col justify-between ${c.packed ? 'ring-2 ring-emerald-500 bg-emerald-50/90' : ''}">
+            <div>
+              <div class="flex items-center justify-between text-xs font-black text-amber-900 border-b border-amber-900/20 pb-1.5 mb-2">
+                <span>📦 THÙNG HÀNG #${idx + 1}</span>
+                <span class="${c.packed ? 'text-emerald-700' : 'text-sky-800'}">${c.packed ? '✅ ĐÃ ĐÓNG' : '⏳ CẦN ĐÓNG'}</span>
+              </div>
+              <div class="flex items-center gap-3 my-2">
+                <span class="text-4xl">${def.icon}</span>
+                <div>
+                  <div class="font-black text-sm text-amber-950">${def.name}</div>
+                  <div class="text-xs font-extrabold ${have >= c.qty || c.packed ? 'text-emerald-700' : 'text-rose-600'}">
+                    Kho: ${have} / Cần: ${c.qty}
+                  </div>
+                </div>
+              </div>
+              <div class="parchment-inset px-2.5 py-1 text-xs font-black flex items-center justify-between mt-2">
+                <span class="text-amber-800">Thưởng thùng:</span>
+                <span>+${c.gold}🪙 • +${c.xp}⭐</span>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              ${c.packed ? `
+                <div class="w-full py-2 rounded-xl bg-emerald-600 text-white text-center font-black text-xs">
+                  ✅ ĐÃ NIÊM PHONG THÙNG
+                </div>
+              ` : `
+                <button
+                  onclick="packSteamshipCrate(${idx})"
+                  ${!canPack ? 'disabled' : ''}
+                  class="btn-juice ${canPack ? 'btn-green' : 'btn-gold'} w-full py-2 rounded-xl font-black text-xs"
+                >
+                  ${ship.status !== 'docked' ? '🌊 Chờ Tàu Cập Bến' : (canPack ? '📦 Đóng Thùng Ngay!' : `Thiếu ${Math.max(0, c.qty - have)} ${def.icon}`)}
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const voucherShopHtml = VOUCHER_SHOP.map(v => {
+        const hasBlue = (state.vouchers.blue || 0) >= v.req.blue;
+        const hasRed  = (state.vouchers.red || 0) >= v.req.red;
+        const hasGold = (state.vouchers.gold || 0) >= v.req.gold;
+        const canRedeem = hasBlue && hasRed && hasGold;
+
+        return `
+          <div class="parchment-card p-3.5 flex flex-col justify-between border-2 border-amber-500/60">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <span class="text-4xl">${v.icon}</span>
+                <div>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${v.kind === 'pet' ? 'bg-purple-700 text-white' : 'bg-amber-500 text-amber-950'}">
+                    ${v.kind === 'pet' ? '🐾 Thú Cưng Quý Hiếm' : '👑 Tượng Trang Trí Vàng'}
+                  </span>
+                  <div class="font-black text-sm mt-0.5 text-amber-950">${v.name}</div>
+                </div>
+              </div>
+              <p class="text-xs font-bold text-amber-800 mt-2">${v.desc}</p>
+            </div>
+
+            <div class="mt-3 pt-2 border-t border-amber-900/20">
+              <div class="flex items-center justify-center gap-2 text-xs font-black mb-2">
+                ${v.req.blue > 0 ? `<span class="px-2 py-0.5 rounded bg-sky-100 ${hasBlue ? 'text-sky-800' : 'text-rose-600'}">🎫 ${v.req.blue} Xanh</span>` : ''}
+                ${v.req.red > 0 ? `<span class="px-2 py-0.5 rounded bg-rose-100 ${hasRed ? 'text-rose-800' : 'text-rose-600'}">🎟️ ${v.req.red} Đỏ</span>` : ''}
+                ${v.req.gold > 0 ? `<span class="px-2 py-0.5 rounded bg-amber-100 ${hasGold ? 'text-amber-800' : 'text-rose-600'}">🏷️ ${v.req.gold} Vàng</span>` : ''}
+              </div>
+              <button
+                onclick="exchangeVoucherReward('${v.id}')"
+                ${!canRedeem ? 'disabled' : ''}
+                class="btn-juice btn-purple w-full py-2 rounded-xl font-black text-xs"
+              >
+                ✨ Đổi Bằng Voucher Ngay
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <!-- Ship Status & 4 Bulk Cargo Crates -->
+        <div class="parchment-card p-4 border-2 border-sky-700">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-amber-900/20">
+            <div class="flex items-center gap-2.5">
+              <span class="text-3xl">${ship.status === 'docked' ? '🚢⚓' : '🌊🚢'}</span>
+              <div>
+                <div class="font-black text-base text-sky-950">
+                  ${ship.status === 'docked'
+                    ? `TÀU HƠI NƯỚC SS. HAY DAY ĐANG CẬP BẾN (Đã đóng: ${packedCount}/4 thùng)`
+                    : 'TÀU ĐANG RỜI CẢNG — CHUYẾN TÀU MỚI ĐANG TRÊN ĐƯỜNG TỚI!'}
+                </div>
+                <div class="text-xs font-bold text-amber-900">
+                  ⏱️ Thời gian: <b id="steamshipTimerLabel" class="text-rose-700">${remSec} giây</b> •
+                  🎁 Phần thưởng đủ 4 thùng: <b>+1 🎫 Xanh, +1 🎟️ Đỏ, +1 🏷️ Vàng, +2 💎 & +150 XP!</b>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="callSteamshipNow()" class="btn-juice btn-blue px-3.5 py-2 rounded-xl font-black text-xs">
+                🚢 ${ship.status === 'docked' ? 'Đổi Chuyến Tàu Mới' : 'Gọi Tàu Cập Bến Ngay!'}
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            ${cratesHtml}
+          </div>
+        </div>
+
+        <!-- Voucher Exchange Catalog -->
+        <div>
+          <div class="text-sm font-black text-amber-100 mb-2 flex items-center gap-2">
+            <span>🎟️ TIỆM ĐỔI PHIẾU VOUCHER MÀU — THÚ CƯNG QUÝ HIẾM & TƯỢNG VÀNG HOÀNG GIA:</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${voucherShopHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function packSteamshipCrate(idx) {
+      const ship = state.steamship;
+      if (!ship || ship.status !== 'docked') return;
+      const crate = ship.crates[idx];
+      if (!crate || crate.packed) return;
+
+      const have = state.inventory[crate.item] || 0;
+      if (have < crate.qty) {
+        spawnToastBanner(`📦 Chưa đủ ${ITEMS[crate.item].name} để đóng thùng hàng này!`);
+        return;
+      }
+
+      addItem(crate.item, -crate.qty);
+      crate.packed = true;
+      state.gold += crate.gold;
+
+      playSound('coin');
+      spawnParticlesAtGrid(15.5, 27.5, '#4ade80', 18);
+      spawnCurvedFloatText(`📦 +${crate.gold}🪙`, 15.5, 27.2, '#fde047', 'gold');
+      addXp(crate.xp, 15.5, 27.2);
+
+      // Check if all 4 crates are packed!
+      const allPacked = ship.crates.every(c => c.packed);
+      if (allPacked) {
+        state.vouchers = state.vouchers || { blue: 0, red: 0, gold: 0 };
+        state.vouchers.blue = (state.vouchers.blue || 0) + 1;
+        state.vouchers.red  = (state.vouchers.red || 0) + 1;
+        state.vouchers.gold = (state.vouchers.gold || 0) + 1;
+        state.diamonds += 2;
+        state.stats.totalOrders = (state.stats.totalOrders || 0) + 1;
+
+        playSound('levelup');
+        spawnFireworksAtGrid(15.5, 27.5, 52);
+        spawnCurvedFloatText('🚢 ĐỦ 4 THÙNG! +1🎫 +1🎟️ +1🏷️ VOUCHER!', 15.5, 26.8, '#fde047', 'barn');
+        spawnCurvedFloatText('+2 💎 Thưởng Tàu VIP!', 16.2, 27.0, '#e879f9', 'diamond');
+        addXp(150, 15.5, 27.5);
+        spawnToastBanner('🚢🎉 XUẤT SẮC! Bạn đã đóng đủ 4/4 Thùng Hàng Tàu Hơi Nước! Nhận +1 Voucher Xanh 🎫, +1 Đỏ 🎟️, +1 Vàng 🏷️ & +2 💎!');
+
+        // Ship departs and next ship arrives in 120s (or player can click Call Now anytime)
+        ship.status = 'sailing';
+        ship.timer = 120;
+      }
+
+      renderSteamshipModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function callSteamshipNow() {
+      playSound('levelup');
+      state.steamship = {
+        status: 'docked',
+        timer: 120,
+        crates: [],
+        shipX: 14.8
+      };
+      generateSteamshipCrates();
+      spawnFireworksAtGrid(15.5, 27.5, 30);
+      spawnToastBanner('🚢 Tuuuu! Tàu Hơi Nước VIP mới đã cập bến sông phía Nam với 4 thùng hàng mới!');
+      renderSteamshipModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function exchangeVoucherReward(shopId) {
+      const item = VOUCHER_SHOP.find(v => v.id === shopId);
+      if (!item) return;
+
+      state.vouchers = state.vouchers || { blue: 0, red: 0, gold: 0 };
+      if ((state.vouchers.blue || 0) < item.req.blue ||
+          (state.vouchers.red || 0) < item.req.red ||
+          (state.vouchers.gold || 0) < item.req.gold) {
+        spawnToastBanner('🎟️ Bạn chưa đủ Phiếu Voucher Màu! Hãy đóng đủ 4 thùng hàng tại Bến Tàu Hơi Nước nhé!');
+        return;
+      }
+
+      state.vouchers.blue -= item.req.blue;
+      state.vouchers.red  -= item.req.red;
+      state.vouchers.gold -= item.req.gold;
+
+      if (item.kind === 'pet') {
+        state.petsUnlocked = true;
+        const gx = 12 + Math.random() * 4;
+        const gy = 12 + Math.random() * 3;
+        state.pets.push({
+          id: 'pet_' + Date.now(),
+          type: item.petType,
+          name: item.name,
+          gx,
+          gy,
+          tx: gx + 1,
+          ty: gy + 1,
+          lastFed: 0
+        });
+        playSound('levelup');
+        spawnFireworksAtGrid(gx, gy, 42);
+        addXp(120, gx, gy);
+        spawnToastBanner(`🐾🎉 Đã đổi thành công Thú Cưng Quý Hiếm: ${item.icon} ${item.name}! Hãy click vuốt ve chú trên sân nhé!`);
+      } else if (item.kind === 'deco') {
+        const def = DECORATIONS[item.decoType];
+        const spot = findFreeGridSpot(2);
+        state.decorations.push({
+          id: 'dec_' + Date.now(),
+          type: item.decoType,
+          gx: spot.gx,
+          gy: spot.gy,
+          size: 2
+        });
+        playSound('levelup');
+        spawnFireworksAtGrid(spot.gx, spot.gy, 45);
+        addXp(def ? def.xp : 150, spot.gx, spot.gy);
+        spawnToastBanner(`👑🎉 Đã đặt Tuyệt Tác Hoàng Kim ${item.icon} ${item.name} lên nông trại! Dùng nút Quy Hoạch 📐 để di chuyển!`);
+      }
+
+      renderSteamshipModal();
+      updateHUD();
+      saveGame();
+    }
+
+    /*************************************************************************
+     * 17C. EXPANSION 3: THE DAILY DIRT NEWSPAPER (BÁO HÀNG XÓM LÀM MỚI MỖI 30S)
+     *************************************************************************/
+    function generateNewspaperAds(forceRefresh = false) {
+      if (!forceRefresh && state.newspaperAds && state.newspaperAds.length === 6) return;
+
+      const rareDealsPool = [
+        { kind: 'mat',  id: 'bolt',            qty: 2, basePrice: 140 },
+        { kind: 'mat',  id: 'plank',           qty: 2, basePrice: 140 },
+        { kind: 'mat',  id: 'tape',            qty: 2, basePrice: 140 },
+        { kind: 'mat',  id: 'tnt',             qty: 2, basePrice: 130 },
+        { kind: 'mat',  id: 'pickaxe',         qty: 2, basePrice: 130 },
+        { kind: 'mat',  id: 'lure',            qty: 2, basePrice: 120 },
+        { kind: 'mat',  id: 'axe',             qty: 2, basePrice: 100 },
+        { kind: 'item', id: 'strawberry_cake', qty: 2, basePrice: 280 },
+        { kind: 'item', id: 'cheese',          qty: 3, basePrice: 195 },
+        { kind: 'item', id: 'pearl',           qty: 1, basePrice: 180 },
+        { kind: 'item', id: 'gold_bar',        qty: 1, basePrice: 220 },
+        { kind: 'item', id: 'lobster',         qty: 2, basePrice: 230 },
+        { kind: 'item', id: 'bread',           qty: 3, basePrice: 84 }
+      ];
+
+      // Shuffle pool so each of the 6 neighbor ads is unique
+      const shuffled = [...rareDealsPool].sort(() => Math.random() - 0.5);
+      const ads = [];
+
+      for (let i = 0; i < 6; i++) {
+        const nb = NEIGHBOR_FARMS[i % NEIGHBOR_FARMS.length];
+        const deal = shuffled[i];
+        const discountPct = 35 + Math.floor(Math.random() * 20); // 35% to 54% OFF!
+        const salePrice = Math.max(15, Math.round(deal.basePrice * (1 - discountPct / 100)));
+
+        ads.push({
+          idx: i,
+          farm: nb.farm,
+          avatar: nb.avatar,
+          quote: nb.quote,
+          kind: deal.kind,
+          itemId: deal.id,
+          qty: deal.qty,
+          origPrice: deal.basePrice,
+          salePrice,
+          discountPct,
+          sold: false
+        });
+      }
+
+      state.newspaperAds = ads;
+      newspaperTimer = 30;
+    }
+
+    function renderNewspaperModal() {
+      generateNewspaperAds(false);
+      const grid = document.getElementById('newspaperAdsGrid');
+      const timerEl = document.getElementById('newspaperTimerText');
+      if (timerEl) timerEl.textContent = Math.max(1, Math.ceil(newspaperTimer)) + 's';
+      if (!grid) return;
+
+      grid.innerHTML = (state.newspaperAds || []).map((ad, idx) => {
+        const def = ad.kind === 'mat' ? MATERIALS[ad.itemId] : ITEMS[ad.itemId];
+        const icon = def ? def.icon : '🎁';
+        const name = def ? def.name : ad.itemId;
+        const canBuy = !ad.sold && state.gold >= ad.salePrice;
+
+        return `
+          <div class="relative rounded-xl p-4 border-2 border-stone-800/80 flex flex-col justify-between shadow-md transition-all ${ad.sold ? 'opacity-60 bg-stone-300/70' : 'bg-[#fdfbf7] hover:-translate-y-0.5'}">
+            <!-- Discount Ribbon -->
+            <div class="flex items-center justify-between border-b-2 border-dotted border-stone-400 pb-2 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">${ad.avatar}</span>
+                <div>
+                  <div class="font-black text-xs uppercase tracking-wider text-stone-900">${ad.farm}</div>
+                  <div class="text-[11px] italic text-stone-600">"${ad.quote}"</div>
+                </div>
+              </div>
+              <span class="bg-rose-600 text-white text-[11px] font-black px-2 py-0.5 rounded-md shadow">
+                -${ad.discountPct}%
+              </span>
+            </div>
+
+            <!-- Advertised Rare Item -->
+            <div class="flex items-center justify-between my-2 px-2 py-2 rounded-lg bg-amber-100/70 border border-amber-300">
+              <div class="flex items-center gap-3">
+                <span class="text-4xl">${icon}</span>
+                <div>
+                  <div class="font-black text-sm text-stone-900">${ad.qty}x ${name}</div>
+                  <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${ad.kind === 'mat' ? 'bg-purple-200 text-purple-900' : 'bg-emerald-200 text-emerald-900'}">
+                    ${ad.kind === 'mat' ? '🔩 Vật Liệu / Công Cụ Hiếm' : '🎂 Nông Sản / Thành Phẩm'}
+                  </span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs line-through text-stone-400 font-bold">${ad.origPrice}🪙</div>
+                <div class="text-base font-black text-amber-900">${ad.salePrice}🪙</div>
+              </div>
+            </div>
+
+            <!-- Buy Action or SOLD Stamp -->
+            <div class="mt-2">
+              ${ad.sold ? `
+                <div class="w-full py-2 rounded-xl border-2 border-rose-700 text-rose-700 font-black text-xs text-center uppercase tracking-widest">
+                  ❌ ĐÃ BÁN HẾT (SOLD OUT)
+                </div>
+              ` : `
+                <button
+                  onclick="buyNewspaperAd(${idx})"
+                  ${!canBuy ? 'disabled' : ''}
+                  class="btn-juice ${canBuy ? 'btn-green' : 'btn-gold'} w-full py-2 rounded-xl font-black text-xs"
+                >
+                  🛒 Săn Hàng Hiếm (${ad.salePrice}🪙)
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function buyNewspaperAd(idx) {
+      const ad = (state.newspaperAds || [])[idx];
+      if (!ad || ad.sold) return;
+      if (state.gold < ad.salePrice) {
+        spawnToastBanner('🪙 Bạn không đủ Vàng để mua mặt hàng giảm giá này!');
+        return;
+      }
+
+      if (ad.kind === 'item' && getTotalStored() + ad.qty > state.storageCap) {
+        spawnToastBanner('🏚️ Kho Vật Phẩm (Barn) đã đầy! Hãy nâng cấp kho trước nhé!');
+        return;
+      }
+
+      state.gold -= ad.salePrice;
+      ad.sold = true;
+
+      const def = ad.kind === 'mat' ? MATERIALS[ad.itemId] : ITEMS[ad.itemId];
+      if (ad.kind === 'mat') {
+        addMaterial(ad.itemId, ad.qty);
+      } else {
+        addItem(ad.itemId, ad.qty);
+      }
+
+      playSound('luckyDrop');
+      playSound('coin');
+      spawnParticlesAtGrid(12.2, 16.5, '#fde047', 20);
+      spawnCurvedFloatText(`📰 +${ad.qty} ${def.icon} ${def.name}!`, 12.2, 16.5, '#fde047', 'barn');
+      addXp(18, 12.2, 16.5);
+      spawnToastBanner(`📰 Săn thành công ${ad.qty}x ${def.icon} ${def.name} giá hời từ ${ad.farm}!`);
+
+      renderNewspaperModal();
+      updateHUD();
+      saveGame();
+    }
+
+    function refreshNewspaperDeals(useDiamond) {
+      if (useDiamond) {
+        if (state.diamonds >= 1) {
+          state.diamonds -= 1;
+        }
+      }
+      playSound('pop');
+      generateNewspaperAds(true);
+      renderNewspaperModal();
+      updateHUD();
+      saveGame();
+      spawnToastBanner('📰 Đã phát hành số báo The Daily Dirt mới với 6 mặt hàng giảm giá sốc!');
+    }
+
+    /*************************************************************************
      * 18. SETTINGS, SANDBOX BOOST & MAIN 60FPS GAME ENGINE LOOP
      *************************************************************************/
     function toggleSound() {
@@ -4427,9 +5390,13 @@
       state.gold += 2000;
       state.diamonds += 20;
       state.tickets += 3;
+      state.vouchers = state.vouchers || { blue: 0, red: 0, gold: 0 };
+      state.vouchers.blue += 2;
+      state.vouchers.red  += 2;
+      state.vouchers.gold += 2;
       Object.keys(MATERIALS).forEach(k => addMaterial(k, 3));
       playSound('levelup');
-      spawnToastBanner('🎁 Đã cộng +2,000🪙, +20💎, +3🎟️ và +3 mỗi loại Vật liệu/Dụng cụ!');
+      spawnToastBanner('🎁 Đã cộng +2,000🪙, +20💎, +3🎟️, +2 mỗi loại Voucher Màu và +3 mỗi loại Vật liệu!');
       updateHUD();
       saveGame();
     }
@@ -4443,6 +5410,8 @@
       localStorage.removeItem(SAVE_KEY);
       state = createInitialState();
       generateOrdersIfNeeded();
+      generateSteamshipCrates();
+      generateNewspaperAds(true);
       closeModal('settingsModal');
       updateHUD();
       spawnToastBanner('🌱 Đã tạo mới Nông Trại Thế Giới Mở 2.5D!');
@@ -4503,6 +5472,55 @@
         if (chestTimer <= 0) {
           chestTimer = 60;
           spawnMysteryChestNow();
+        }
+      }
+
+      // 3b. Daily Dirt Newspaper Auto-Refresh Timer (Refreshes every 30 seconds!)
+      newspaperTimer -= dt;
+      if (newspaperTimer <= 0) {
+        generateNewspaperAds(true);
+        const newsModal = document.getElementById('newspaperModal');
+        if (newsModal && newsModal.classList.contains('open')) {
+          renderNewspaperModal();
+        }
+        updateHUD();
+      } else {
+        const timerEl = document.getElementById('newspaperTimerText');
+        if (timerEl) timerEl.textContent = Math.max(1, Math.ceil(newspaperTimer)) + 's';
+      }
+
+      // 3c. Southern River Steamship Dock 2-Minute (120s) Cycle & Ship Animation
+      if (state.steamship) {
+        state.steamship.timer -= dt;
+        if (state.steamship.status === 'docked') {
+          // Smoothly approach dock at gx = 14.8
+          state.steamship.shipX = state.steamship.shipX !== undefined ? state.steamship.shipX : 14.8;
+          state.steamship.shipX += (14.8 - state.steamship.shipX) * Math.min(1, dt * 3);
+          if (state.steamship.timer <= 0) {
+            // Ship departs and next ship arrives in 120s
+            state.steamship.status = 'sailing';
+            state.steamship.timer = 120;
+            spawnToastBanner('🚢 Tàu Hơi Nước đã rời bến! Chuyến tàu tiếp theo sẽ cập cảng sau 2 phút (hoặc gọi sớm tại Bến Tàu)!');
+            updateHUD();
+          }
+        } else {
+          // Sail away toward eastern river
+          state.steamship.shipX = (state.steamship.shipX || 14.8) + 1.8 * dt;
+          if (state.steamship.shipX > 28) state.steamship.shipX = 3;
+          if (state.steamship.timer <= 0) {
+            state.steamship.status = 'docked';
+            state.steamship.timer = 120;
+            state.steamship.shipX = 8.0;
+            state.steamship.crates = [];
+            generateSteamshipCrates();
+            playSound('levelup');
+            spawnToastBanner('🚢⚓ Tuuuu! Tàu Hơi Nước VIP mới đã cập bến sông phía Nam! Đóng 4 thùng hàng để nhận Voucher Màu!');
+            updateHUD();
+          }
+        }
+        const shipTimerEl = document.getElementById('steamshipTimerLabel');
+        if (shipTimerEl) {
+          shipTimerEl.textContent = Math.max(0, Math.ceil(state.steamship.timer)) + ' giây';
         }
       }
 
